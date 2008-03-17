@@ -7,10 +7,8 @@
 use strict;
 use utf8;
 
-use DBI;
 use Net::Twitter;
 use Encode;
-use YAML;
 
 use lib './lib';
 use Bombtter;
@@ -18,34 +16,46 @@ use Bombtter;
 #print $Bombtter::VERSION;
 #exit;
 
-my $conffile = 'bombtter.conf';
-my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
-
-binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
+my $conf = load_config;
+set_terminal_encoding($conf);
 
 my $enable_posting = $conf->{'enable_posting'} || 0;
 my $limit = $conf->{'posts_at_once'} || 1;
 
-
-my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
+my $dbh = db_connect($conf);
 
 my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
 my $n_unposted = $hashref->{'count'};
-print "Unposted bombs: $n_unposted\n";
+logger("Unposted bombs: $n_unposted");
 
 my @posts = ();
-my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
+#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
+my $sth = $dbh->prepare(
+	'SELECT *, (' .
+	' SELECT COUNT(*) FROM bombs co ' .
+	'  WHERE co.target = li.target' .
+	'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
+	'  GROUP BY co.target) AS count ' .
+	'FROM bombs li WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
+# FIXME 複数個を一度に post する場合は count の計算をちゃんとしないとない
+#       (全部 post した後で posted_at が更新されるため)
 $sth->execute($limit);
 while(my $update = $sth->fetchrow_hashref)
 {
 	my $status_id = $update->{'status_id'};
 	my $target = $update->{'target'};
+	my $count = $update->{'count'} || 0;
 
 	my $extra = '';
 	if(int(rand(100)) < 10)
 	{
 		my @extras = ('盛大に', 'ひっそりと', '派手に');
 		#$extra = $extras[int(rand($#extras+1))];
+	}
+
+	if($count > 1)
+	{
+		$extra = 'また';
 	}
 
 	my $result = 'が' . $extra . '爆発しました。';
@@ -74,13 +84,14 @@ foreach(@posts)
 {
 	my $post = $_->{'post'};
 
-	print "$post\n";
+	logger("post: $post");
 
 	my $status = undef;
 	if($enable_posting)
 	{
 		$status = $twit->update(encode('utf8', $post));
-		print Dump($status);
+		# FIXME $twit->http_code のチェック
+		logger(Dump($status));
 		if(defined($status))
 		{
 			$sth->execute($_->{'id'});
@@ -94,6 +105,6 @@ foreach(@posts)
 }
 $sth->finish;
 
-print "posted $n_posted bombs.\n";
+logger("posted $n_posted bombs.");
 
 $dbh->disconnect;

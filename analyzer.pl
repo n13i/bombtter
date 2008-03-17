@@ -10,14 +10,14 @@ use DBI;
 use YAML;
 
 use lib './lib';
+use Bombtter;
 use Bombtter::Analyzer;
 
-my $conffile = 'bombtter.conf';
-my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
+my $conf = load_config;
+set_terminal_encoding($conf);
 
-binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
+my $dbh = db_connect($conf);
 
-my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
 $dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, posted_at TIMESTAMP)');
 
 my $sth = $dbh->prepare('SELECT * FROM updates WHERE analyzed IS NULL ORDER BY status_id DESC');

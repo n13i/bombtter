@@ -7,16 +7,13 @@ use strict;
 use utf8;
 
 use DBI;
-use YAML;
 
 use lib './lib';
+use Bombtter;
 use Bombtter::Analyzer;
 
-my $conffile = 'bombtter.conf';
-my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
-
-binmode STDIN, ":encoding($conf->{'terminal_encoding'})";
-binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
+my $conf = load_config;
+set_terminal_encoding($conf);
 
 #foreach(<STDIN>) # foreach だと全体を読み込んでからになる
 while(<STDIN>)
@@ -29,5 +26,9 @@ while(<STDIN>)
 	if(defined($result))
 	{
 		print 'result: ' . $result . "\n\n";
+	}
+	else
+	{
+		print "result:\n";
 	}
 }

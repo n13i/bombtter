@@ -6,15 +6,12 @@
 use strict;
 use utf8;
 
-use DBI;
-use YAML;
+use lib './lib';
+use Bombtter;
 
-my $conffile = 'bombtter.conf';
-my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
-
-binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
-
-my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
+my $conf = load_config;
+set_terminal_encoding($conf);
+my $dbh = db_connect($conf);
 
 my $sth = $dbh->prepare('SELECT status FROM updates');
 $sth->execute();
