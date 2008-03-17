@@ -55,7 +55,7 @@ while(my $update = $sth->fetchrow_hashref)
 
 	if($count > 1)
 	{
-		$extra = 'また';
+		#$extra = 'また';
 	}
 
 	my $result = 'が' . $extra . '爆発しました。';
