@@ -11,7 +11,7 @@ use utf8;
 use Exporter;
 
 use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.01";
+$VERSION = "0.12";
 @ISA = qw(Exporter);
 @EXPORT = qw(analyze);
 
@@ -51,7 +51,7 @@ sub analyze
 			^(と|て)いうか$
 			}x ||
 		   $outro =~ m{
-			^(は|とか|っは|って|よ[^。]|でも|と思う|とおもう)
+			^(は|な|とか|っは|って|よ[^。]|でも|と思う|とおもう)
 			}x)
 		{
 			print "> skipped.\n";

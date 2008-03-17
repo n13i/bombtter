@@ -12,9 +12,11 @@ use Net::Twitter;
 use Encode;
 use YAML;
 
-#use lib './lib';
-#use Bombtter;
+use lib './lib';
+use Bombtter;
 
+#print $Bombtter::VERSION;
+#exit;
 
 my $conffile = 'bombtter.conf';
 my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");

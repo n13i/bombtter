@@ -11,7 +11,7 @@ use utf8;
 use Exporter;
 
 use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.01";
+$VERSION = "0.12";
 @ISA = qw(Exporter);
 @EXPORT = qw(fetch_html read_html scrape_html);
 

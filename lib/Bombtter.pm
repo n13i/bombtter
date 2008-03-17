@@ -1,5 +1,5 @@
 package Bombtter;
-$VERSION = "0.01";
+$VERSION = "0.12";
 
 use warnings;
 use strict;
