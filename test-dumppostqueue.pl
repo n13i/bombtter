@@ -1,18 +1,18 @@
 #!/usr/bin/perl -w
 
+# 2008/03/18
+# $Id$
+
 use strict;
 use utf8;
 
-use DBI;
-use YAML;
+use lib './lib';
+use Bombtter;
 
-my $conffile = 'bombtter.conf';
-my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
+my $conf = load_config;
+set_terminal_encoding($conf);
 
-binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
-
-
-my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
+my $dbh = db_connect($conf);
 
 my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
 my $n_unposted = $hashref->{'count'};

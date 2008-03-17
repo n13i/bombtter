@@ -7,9 +7,6 @@
 use strict;
 use utf8;
 
-use DBI;
-use YAML;
-
 use lib './lib';
 use Bombtter;
 use Bombtter::Fetcher;
