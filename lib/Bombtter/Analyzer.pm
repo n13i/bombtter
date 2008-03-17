@@ -11,7 +11,7 @@ use utf8;
 use Exporter;
 
 use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.12";
+$VERSION = "0.13";
 @ISA = qw(Exporter);
 @EXPORT = qw(analyze);
 
@@ -26,19 +26,30 @@ sub analyze
 
 	print 'target: ' . $target . "\n";
 
+	# 適当に解析
 	if($target =~ m{
-		^(.*(?:$seps)+|)               # skip preface
-		([^(?:$seps)]{1,40}?|^\@\S+)   # bombing target object
-		(?:、|は|\s+)?
+		(?:
+		 # ターゲット名
+		 ([^(?:$seps)]{1,40}?)
+		 # ターゲットに続く補足部分
+		 (?:
+		   (?:
+		     、(?:ほんとに?|マジで?|まじで?)?|
+		     は[^(?:$seps)]*?
+		   )
+		 )?
+		 |
+		 # @name のみの場合
+		 ^(\@\S+\s)
+		)
 		大?爆発しろ
 		(?:!+|！+|。|．|\.\s)?(.{0,40}$)
 		}msx)
 	{
-		my $intro  = $1;
-		my $object = $2;
+		my $object = $1 || $2;
 		my $outro  = $3;
 
-		print "[intro:$intro][object:$object][outro:$outro]\n";
+		print "[object:$object][outro:$outro]\n";
 
 		# check target
 		if($object =~ m{
@@ -48,7 +59,8 @@ sub analyze
 			^もう$|
 			^盛大に$|
 			^は$|
-			^(と|て)いうか$
+			^(と|て)いうか$|
+			^全力で$
 			}x ||
 		   $outro =~ m{
 			^(は|な|とか|っは|って|よ[^。]|でも|と思う|とおもう)
