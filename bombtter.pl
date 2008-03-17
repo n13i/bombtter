@@ -16,13 +16,13 @@ use YAML;
 #use Bombtter;
 
 
-my $limit = 1;
-my $showonly = 1;
-
 my $conffile = 'bombtter.conf';
 my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
 
 binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
+
+my $enable_posting = $conf->{'enable_posting'} || 0;
+my $limit = $conf->{'posts_at_once'} || 1;
 
 
 my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
@@ -75,7 +75,7 @@ foreach(@posts)
 	print "$post\n";
 
 	my $status = undef;
-	if(!$showonly)
+	if($enable_posting)
 	{
 		$status = $twit->update(encode('utf8', $post));
 		print Dump($status);
