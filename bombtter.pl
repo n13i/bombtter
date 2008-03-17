@@ -9,6 +9,7 @@ use utf8;
 
 use Net::Twitter;
 use Encode;
+use YAML;  # for YAML::Dump
 
 use lib './lib';
 use Bombtter;
