@@ -32,16 +32,20 @@ while(my $update = $sth->fetchrow_hashref)
 	my $status_id = $update->{'status_id'};
 	my $bombed = analyze($update->{'status'});
 
+	logger("target: " . $update->{'status'});
+
 	my $analyze_result;
 
 	if(defined($bombed))
 	{
 		push(@analyze_ok_ids, $status_id);
 		$sth_insert->execute($status_id, $bombed);
+		logger("result: " . $bombed);
 	}
 	else
 	{
 		push(@analyze_ng_ids, $status_id);
+		logger("result:");
 	}
 
 	# fetchrow 中のテーブルを update しようとすると怒られる(2008/03/17)
