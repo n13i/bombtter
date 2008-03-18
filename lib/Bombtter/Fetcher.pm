@@ -35,13 +35,14 @@ sub fetch_html
 	my $search_keyword = '%E7%88%86%E7%99%BA%E3%81%97%E3%82%8D';
 
 	my $ua = LWP::UserAgent->new();
+	$ua->timeout(60);
 	my $res = $ua->get('http://twitter.1x1.jp/search/?keyword='
 					   . $search_keyword
 					   . '&lang=&text=1ja&offset=' . $offset . '&source=');
 
-	print $res->code . "\n";
+	print $res->code . ' ' . $res->message . "\n";
 
-	if($res->code != 200)
+	if(!$res->is_success || $res->code != 200)
 	{
 		return undef;
 	}
