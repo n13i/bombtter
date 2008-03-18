@@ -84,7 +84,8 @@ while(my $update = $sth->fetchrow_hashref)
 	}
 
 	#my $post = '●~* ' . $target . $result;
-	my $post = '[●~] ' . $target . $result;
+	#my $post = '[●~] ' . $target . $result;
+	my $post = '●~＊ ' . $target . $result;
 
 	push(@posts, { 'id' => $status_id, 'post' => $post });
 }
