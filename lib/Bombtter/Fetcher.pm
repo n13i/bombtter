@@ -30,7 +30,7 @@ sub fetch_html
 		return undef;
 	}
 
-	print "Searching Twitter search (offset=$offset) ... ";
+	print "Searching Twitter search (offset=$offset) ...\n";
 
 	my $search_keyword = '%E7%88%86%E7%99%BA%E3%81%97%E3%82%8D';
 
@@ -40,7 +40,7 @@ sub fetch_html
 					   . $search_keyword
 					   . '&lang=&text=1ja&offset=' . $offset . '&source=');
 
-	print $res->code . ' ' . $res->message . "\n";
+	print 'Result: ' . $res->code . ' ' . $res->message . "\n";
 
 	if(!$res->is_success || $res->code != 200)
 	{
