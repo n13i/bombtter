@@ -65,6 +65,22 @@ while(my $update = $sth->fetchrow_hashref)
 		#$result = 'は爆発しませんでした。';
 	}
 
+	if($target eq '@' . $conf->{'twitter_username'} . ' ')
+	{
+		# 身代わりに何か適当なものを爆発させる
+		my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
+		my $subst = $hashref->{'target'};
+
+		if(int(rand(100)) < 70 || !defined($subst))
+		{
+			$result = 'が自爆しました。';
+		}
+		else
+		{
+			$result = 'の身代わりとして' . $subst . 'が爆発しました。';
+		}
+	}
+
 	#my $post = '●~* ' . $target . $result;
 	my $post = '[●~] ' . $target . $result;
 
