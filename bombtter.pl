@@ -109,9 +109,11 @@ foreach(@posts)
 	if($enable_posting)
 	{
 		$status = $twit->update(encode('utf8', $post));
-		# FIXME $twit->http_code のチェック
+
+		logger('update: code ' . $twit->http_code . ' ' . $twit->http_message);
 		logger(Dump($status));
-		if(defined($status))
+
+		if($twit->http_code == 200)
 		{
 			$sth->execute($_->{'id'});
 			$n_posted++;
