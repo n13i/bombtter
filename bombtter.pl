@@ -54,12 +54,14 @@ while(my $update = $sth->fetchrow_hashref)
 		#$extra = $extras[int(rand($#extras+1))];
 	}
 
+	my $result = 'が' . $extra . '爆発しました。';
+
 	if($count > 1)
 	{
 		#$extra = 'また';
+		#$result = 'は今日も爆発しました。';
 	}
 
-	my $result = 'が' . $extra . '爆発しました。';
 	if(int(rand(100)) < 5)
 	{
 		#$result = 'は爆発しませんでした。';
@@ -71,7 +73,7 @@ while(my $update = $sth->fetchrow_hashref)
 		my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
 		my $subst = $hashref->{'target'};
 
-		if(int(rand(100)) < 70 || !defined($subst))
+		if(int(rand(100)) < 30 || !defined($subst))
 		{
 			$result = 'が自爆しました。';
 		}
