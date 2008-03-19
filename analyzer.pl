@@ -30,9 +30,11 @@ while(my $update = $sth->fetchrow_hashref)
 {
 #	push(@targets, $update->{'status'});
 	my $status_id = $update->{'status_id'};
-	my $bombed = analyze($update->{'status'});
+	my $target = $update->{'status'};
 
-	logger("target: " . $update->{'status'});
+	logger("target: " . $target);
+
+	my $bombed = analyze($target);
 
 	my $analyze_result;
 

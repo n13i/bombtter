@@ -31,6 +31,7 @@ sub set_terminal_encoding
 	my $conf = shift || die;
 	binmode STDIN, ":encoding($conf->{'terminal_encoding'})";
 	binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
+	binmode STDERR, ":encoding($conf->{'terminal_encoding'})";
 }
 
 sub db_connect

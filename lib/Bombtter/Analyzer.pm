@@ -25,11 +25,11 @@ sub analyze
 	my $seps = '。．、，！!？\?…‥・：ｗ（）「『」』\s';
 	my $cadds = 'とりあえず|(?:ほんと|ホント|本当)に?|(?:マジ|まじ)で?|だったら';
 	my $sadds = $cadds . '|うあー|あー|もう|あーもう|ちくしょー|思うと';
-	my $eadds = $cadds . '|ごと|みんな|皆|なんて|なんか|とか|がって|いったん|一旦';
+	my $eadds = $cadds . '|ごと|みんな|皆|なんて|なんか|とか|がって|いったん|一旦|本気で';
 
 	$target =~ s/(\[.+\]|\*.+\*)$//;
 
-	print 'target: ' . $target . "\n";
+	#print 'target: ' . $target . "\n";
 
 	# 適当に解析
 	if($target =~ m{
@@ -65,7 +65,7 @@ sub analyze
 		my $object = $1 || $2;
 		my $outro  = $3;
 
-		print "[object:$object][outro:$outro]\n";
+		print "  ($object)($outro)\n";
 
 		# check target
 		# post するだけのクオリティが得られていない場合
@@ -85,7 +85,7 @@ sub analyze
 			^(は|な|とか|とは|っは|って|よ[^。]|では|でも|と思う|とおもう)
 			}ox)
 		{
-			print "> skipped.\n";
+			print "  skipped: $target\n";
 			return undef;
 		}
 
@@ -103,12 +103,12 @@ sub analyze
 			)//x;
 		#$object =~ s/^(\@.+)$/$1 /g;
 
-		print "> $object\n";
+		print "  got [$object]: $target\n";
 		return $object;
 	}
 	else
 	{
-		print '> unmatched.' . "\n";
+		print "  unmatched: $target\n";
 		return undef;
 	}
 }
