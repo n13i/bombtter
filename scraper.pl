@@ -48,8 +48,15 @@ while($remote_earliest_status_id >= $local_latest_status_id && $try < $try_max)
 	#my $buf = read_html('targets/twsearch.html');
 	die if(!defined($buf));
 
-	my $r = scrape_html($buf);
+	#my $r = scrape_html($buf);
+	my $r = scrape_html_regexp($buf);
 	die if(!defined($r));
+
+#	my $uri = get_uri($try + 1);
+#	die if(!defined($uri));
+#
+#	my $r = scrape_html(new URI($uri));
+#	die if(!defined($r));
 
 	$remote_earliest_status_id = $r->{'earliest_status_id'};
 

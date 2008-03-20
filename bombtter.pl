@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# vim: noexpandtab
 
 # Bombtter - What are you bombing?
 # 2008/03/16 naoh
@@ -67,11 +68,16 @@ while(my $update = $sth->fetchrow_hashref)
 		#$result = 'は爆発しませんでした。';
 	}
 
-	if($target eq '@' . $conf->{'twitter_username'} . ' ')
+	if($target =~ /^\@$conf->{'twitter_username'}\s*/)
 	{
 		# 身代わりに何か適当なものを爆発させる
 		my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
 		my $subst = $hashref->{'target'};
+
+		if(!defined($subst))
+		{
+			logger("WARNING: subst is undef");
+		}
 
 		if(int(rand(100)) < 30 || !defined($subst))
 		{

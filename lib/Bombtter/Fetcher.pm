@@ -1,6 +1,7 @@
 package Bombtter::Fetcher;
+# vim: noexpandtab
 
-# Twitter 検索をスクレイピングする
+# Twitter 讀懃ｴ｢繧偵せ繧ｯ繝ｬ繧､繝斐Φ繧ｰ縺吶ｋ
 # 2008/03/17 naoh
 # $Id$
 
@@ -11,15 +12,17 @@ use utf8;
 use Exporter;
 
 use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.12";
+$VERSION = "0.13";
 @ISA = qw(Exporter);
-@EXPORT = qw(fetch_html read_html scrape_html);
+@EXPORT = qw(get_uri fetch_html read_html scrape_html_regexp scrape_html);
 
 use LWP::UserAgent;
 use Encode;
+use Web::Scraper;
+use URI;
 
 
-sub fetch_html
+sub get_uri
 {
 	my $offset = shift || 1;
 
@@ -30,15 +33,29 @@ sub fetch_html
 		return undef;
 	}
 
-	print "Searching Twitter search (offset=$offset) ...\n";
+	print "Twitter search (offset=$offset) ...\n";
 
 	my $search_keyword = '%E7%88%86%E7%99%BA%E3%81%97%E3%82%8D';
 
+	return 'http://twitter.1x1.jp/search/?keyword='
+		   . $search_keyword
+		   . '&lang=&text=1ja&offset=' . $offset . '&source=';
+}
+
+sub fetch_html
+{
+	my $offset = shift || 1;
+
+	my $uri = get_uri($offset);
+
+	if(!defined($uri))
+	{
+		return undef;
+	}
+
 	my $ua = LWP::UserAgent->new();
 	$ua->timeout(60);
-	my $res = $ua->get('http://twitter.1x1.jp/search/?keyword='
-					   . $search_keyword
-					   . '&lang=&text=1ja&offset=' . $offset . '&source=');
+	my $res = $ua->get($uri);
 
 	print 'Result: ' . $res->code . ' ' . $res->message . "\n";
 
@@ -63,7 +80,7 @@ sub read_html
 	return $buf;
 }
 
-sub scrape_html
+sub scrape_html_regexp
 {
 	my $buf = shift || return undef;
 
@@ -96,7 +113,10 @@ sub scrape_html
 				$twiturl = $4;
 				($status_id) = $twiturl =~ /statuses\/(\d+)/;
 
+				# @ 繝ｪ繝ｳ繧ｯ縺ｮ髯､蜴ｻ
 				$status =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
+				# <a href="~"> 縺ｮ髯､蜴ｻ
+				$status =~ s/<a\s+(?:.+?)?href=\"([^\"]+)\"[^>]*>.+?<\/a>/$1/g;
 
 				#print "$name $screen_name $twiturl $status_id\n";
 				#print "$status\n---\n";
@@ -128,5 +148,79 @@ sub scrape_html
 	}
 }
 
+sub scrape_html
+{
+	my $html = shift || return undef;
+
+	my $earliest_status_id = 99999999999;
+
+	my $trimmed_text = [ 'TEXT', sub { s/^\s*(.+?)\s*$/$1/ } ];
+	my $list = scraper {
+		process 'table.list tbody tr',
+				'updates[]' => scraper {
+					process 'td:nth-child(1) a',
+					'twiturl_home' => '@href';
+					process 'td:nth-child(1) a img',
+							'iconurl' => '@src',
+							'profile' => '@alt';
+
+					process 'td:nth-child(2)',
+							'screen_name' => [ 'TEXT', sub { s/^\s*(.+?)\s+\@[^@]+$/$1/ } ];
+					process 'td:nth-child(2) a',
+							'name' => $trimmed_text;
+
+					process 'td:nth-child(3)',
+							'status' => $trimmed_text;
+
+					process 'td:nth-child(4) a',
+							'web' => '@href';
+
+					process 'td:nth-child(5) a',
+							'twiturl' => '@href',
+							'status_id' => [ '@href', sub { s/^.+?\/statuses\/(\d+)$/$1/ } ];
+
+					process 'td:nth-child(6)',
+							'from' => 'HTML';
+
+					process 'td:nth-child(7)',
+							'timestamp' => $trimmed_text;
+
+					result 'twiturl_home', 'iconurl', 'profile',
+						   'screen_name', 'name',
+						   'status',
+						   'web',
+						   'twiturl', 'status_id',
+						   'from',
+						   'timestamp';
+				};
+
+		result 'updates';
+	};
+
+	my $r_updates = $list->scrape($html);
+	#use YAML;
+	#print Dump($r_updates);
+
+	if($#$r_updates == -1)	
+	{
+		print "empty list: maybe scraping error?\n";
+		return undef;
+	}
+
+	foreach(@$r_updates)
+	{
+		if($_->{'status_id'} < $earliest_status_id)
+		{
+			$earliest_status_id = $_->{'status_id'};
+		}
+	}
+
+	return {
+		'earliest_status_id' => $earliest_status_id,
+		'updates' => $r_updates,
+	};
+}
+
 1;
 __END__
+
