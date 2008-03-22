@@ -17,6 +17,10 @@ $VERSION = "0.13";
 @EXPORT = qw(analyze);
 
 #use Bombtter;
+use MeCab;
+use Encode;
+
+my $mecab_dic_encoding = 'euc-jp';
 
 sub analyze
 {
@@ -117,6 +121,45 @@ sub analyze
 #			^.+だったら
 			)//x;
 		#$object =~ s/^(\@.+)$/$1 /g;
+
+		# 形態素解析テスト
+		my @sentence = ();
+		my $mecab = new MeCab::Tagger('');
+		my $node = $mecab->parseToNode(encode($mecab_dic_encoding, $object));
+		$node = $node->{next};
+		while($node->{next})
+		{
+			my $surface = decode($mecab_dic_encoding, $node->{surface});
+			my $feature = decode($mecab_dic_encoding, $node->{feature});
+			printf "  : %s\t%s\n", $surface, $feature; 
+
+			unshift(@sentence, {
+					surface => $surface,
+					feature => $feature
+			});
+
+			$node = $node->{next};
+		}
+
+		# 先頭が名詞になるまで
+		while($#sentence >= 0 && $sentence[0]->{feature} !~ /^名詞/)
+		{
+			shift(@sentence);
+		}
+
+		if($#sentence == -1)
+		{
+			print "  skipped (due to morphological analysis): $target\n";
+			return undef;
+		}
+
+		my @out = ();
+		foreach(@sentence)
+		{
+			push(@out, $_->{surface});
+		}
+
+		$object = join('', reverse(@out));
 
 		print "  got [$object]: $target\n";
 		return $object;
