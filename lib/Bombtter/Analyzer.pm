@@ -27,9 +27,10 @@ sub analyze
 	my $target = shift || return undef;
 
 #	my $seps = '。|．|\.\s|、|，|,\s|！|!|？|\?|…|･･|・|：|ｗ+|（|）|「|『|」|』|\s';
+	# FIXME スペースを含む英単語が分割されてしまう件
 	my $seps = '。．、，！!？\?…‥・：ｗ（）「『」』\s';
 	my $cadds = 'とりあえず|(?:ほんと|ホント|本当)に?|(?:マジ|まじ)で?|だったら';
-	my $sadds = $cadds . '|うあー|あー|もう|あーもう|ちくしょー|思うと|つーことで|なんだ|やっぱり';
+	my $sadds = $cadds . '|うあー|あー|もう|あーもう|ちくしょー|思うと|つーことで|なんだ|やっぱり|くそー';
 	my $eadds = $cadds . '|ごと|みんな|皆|なんて|なんか|とか|がって|いったん|一旦|本気で';
 
 	$target =~ s/(\[.+\]|\*.+\*)$//;
@@ -48,7 +49,8 @@ sub analyze
 		  # ターゲット前の補足部分があれば喰っておく
 		  (?:.*(?:$sadds))?
 		  # ターゲット名
-		  ([^(?:$seps)]{0,39}?[^(?:$seps)はがのをに])
+		  #([^(?:$seps)]{0,39}?[^(?:$seps)はがのをに])
+		  ([^(?:$seps)]{1,40}?)
 		  # ターゲットに続く補足部分
 		  (?:
 		    (?:
@@ -92,7 +94,7 @@ sub analyze
 			^全力で$|
 			^[＜＞]$|
 			方法で$|
-			[てで]$|      # FIXME 文末の品詞を調べるべき
+			#[てで]$|      # FIXME 文末の品詞を調べるべき
 			^(?:$cadds)$
 			}x)
 		{
@@ -111,7 +113,6 @@ sub analyze
 		# normalize target
 		$object =~ s/(
 #			とか(まじ|マジ)で?$|
-#			は(みんな|皆)$|
 #			^とりあえず|
 #			^うあー|
 #			^ちくしょー|
@@ -123,6 +124,7 @@ sub analyze
 		#$object =~ s/^(\@.+)$/$1 /g;
 
 		# 形態素解析テスト
+		# 表層形と品詞を文末の単語から順に @sentence へ
 		my @sentence = ();
 		my $mecab = new MeCab::Tagger('');
 		my $node = $mecab->parseToNode(encode($mecab_dic_encoding, $object));
@@ -141,7 +143,14 @@ sub analyze
 			$node = $node->{next};
 		}
 
-		# 先頭が名詞になるまで
+		if($sentence[0]->{feature} =~ /^助詞/)
+		{
+			# 文末の単語が助詞だった
+			print "  skipped (due to MA - end with particle): $target\n";
+			return undef;
+		}
+
+		# 文末の単語が名詞になるまで
 		while($#sentence >= 0 && $sentence[0]->{feature} !~ /^名詞/)
 		{
 			shift(@sentence);
@@ -149,10 +158,12 @@ sub analyze
 
 		if($#sentence == -1)
 		{
-			print "  skipped (due to morphological analysis): $target\n";
+			# 名詞が見つからなかった
+			print "  skipped (due to MA - no noun): $target\n";
 			return undef;
 		}
 
+		# 表層形のみの配列を作る
 		my @out = ();
 		foreach(@sentence)
 		{
