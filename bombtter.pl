@@ -27,6 +27,7 @@ if(!defined($ARGV[0]))
 	die("usage: bombtter.pl [fetch|post|both]\n");
 }
 
+logger('mode: ' . $ARGV[0]);
 
 my $dbh = db_connect($conf);
 
