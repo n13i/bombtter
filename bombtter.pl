@@ -20,6 +20,8 @@ use Bombtter::Analyzer;
 my $conf = load_config;
 set_terminal_encoding($conf);
 
+logger('$Id$');
+
 if(!defined($ARGV[0]))
 {
 	die("usage: bombtter.pl [fetch|post|both]\n");
