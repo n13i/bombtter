@@ -145,6 +145,12 @@ sub bombtter_analyzer
 	my @analyze_ok_ids = ();
 	my @analyze_ng_ids = ();
 
+	my $mecab_opts = '';
+	if(defined($conf->{'mecab_userdic'}))
+	{
+		$mecab_opts .= '--userdic=' . $conf->{'mecab_userdic'};
+	}
+
 	my $sth_insert = $dbh->prepare(
 		'INSERT INTO bombs (status_id, target) VALUES (?, ?)');
 	$dbh->begin_work;
@@ -156,7 +162,7 @@ sub bombtter_analyzer
 
 		logger("target: " . $target);
 
-		my $bombed = analyze($target);
+		my $bombed = analyze($target, $mecab_opts);
 
 		my $analyze_result;
 

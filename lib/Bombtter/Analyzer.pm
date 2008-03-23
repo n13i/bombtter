@@ -25,6 +25,7 @@ my $mecab_dic_encoding = 'euc-jp';
 sub analyze
 {
 	my $target = shift || return undef;
+	my $mecab_opts = shift || '';
 
 #	my $seps = '。|．|\.\s|、|，|,\s|！|!|？|\?|…|･･|・|：|ｗ+|（|）|「|『|」|』|\s';
 	# FIXME スペースを含む英単語が分割されてしまう件
@@ -126,7 +127,7 @@ sub analyze
 		# 形態素解析テスト
 		# 表層形と品詞を文末の単語から順に @sentence へ
 		my @sentence = ();
-		my $mecab = new MeCab::Tagger('');
+		my $mecab = new MeCab::Tagger($mecab_opts);
 		my $node = $mecab->parseToNode(encode($mecab_dic_encoding, $object));
 		$node = $node->{next};
 		while($node->{next})
