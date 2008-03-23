@@ -280,7 +280,14 @@ logger("Unposted bombs: $n_unposted");
 
 		#my $post = '●~* ' . $target . $result;
 		#my $post = '[●~] ' . $target . $result;
-		my $post = '●~＊ ' . $target . $result;
+		#my $post = '●~＊ ' . $target . $result;
+		my $post = $target . $result;
+
+		# reply してしまわないように
+		if($target =~ /^\s*\@/)
+		{
+			$post = '. ' . $post;
+		}
 
 		push(@posts, { 'id' => $status_id, 'post' => $post });
 	}
