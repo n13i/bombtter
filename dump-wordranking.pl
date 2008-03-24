@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # 2008/03/18
-# $Id: test-dump-postqueue.pl 28 2008-03-20 20:32:18Z naoh $
+# $Id$
 
 use strict;
 use utf8;
