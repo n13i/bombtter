@@ -121,6 +121,7 @@ sub scrape_html_regexp
 				#print "$name $screen_name $twiturl $status_id\n";
 				#print "$status\n---\n";
 
+				# FIXME name と screen_name が Twitter API と逆
 				push(@$r_updates, {
 					'status_id'   => $status_id,
 					'twiturl'     => $twiturl,

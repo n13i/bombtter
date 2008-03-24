@@ -27,10 +27,11 @@ if(defined($conf->{'mecab_userdic'}))
 while(<STDIN>)
 {
 	chomp;
+    my $target = $_;
 
-	print 'target: ' . $_ . "\n";
+	print 'target: ' . $target . "\n";
 
-	my $result = analyze($_, $mecab_opts);
+	my $result = analyze($target, $mecab_opts);
 
 	if(defined($result))
 	{
@@ -38,7 +39,7 @@ while(<STDIN>)
 	}
 	else
 	{
-		print "result:\n";
+		print 'failed: ' . $target . "\n";
 	}
 	print "--------\n";
 
