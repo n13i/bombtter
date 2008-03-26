@@ -341,13 +341,13 @@ sub bombtter_publisher
 			#$extra = $extras[int(rand($#extras+1))];
 		}
 
-		my $result = 'が' . $extra . '爆発しました。';
-
 		if($count > 1)
 		{
 			#$extra = 'また';
 			#$result = 'は今日も爆発しました。';
 		}
+
+		my $result = 'が' . $extra . '爆発しました。';
 
 		if(int(rand(100)) < 5)
 		{
@@ -365,7 +365,7 @@ sub bombtter_publisher
 				logger('publisher', "WARNING: subst is undef");
 			}
 
-			if(int(rand(100)) < 30 || !defined($subst))
+			if(int(rand(100)) < 70 || !defined($subst))
 			{
 				$result = 'が自爆しました。';
 			}
@@ -410,7 +410,8 @@ sub bombtter_publisher
 		{
 			$status = $twit->update(encode('utf8', $post));
 
-			logger('publisher', 'update: code ' . $twit->http_code . ' ' . $twit->http_message);
+			logger('publisher', 'update: code ' .
+								$twit->http_code . ' ' . $twit->http_message);
 			logger('publisher', Dump($status));
 
 			if($twit->http_code == 200)
