@@ -13,7 +13,7 @@ my $conf = load_config;
 set_terminal_encoding($conf);
 my $dbh = db_connect($conf);
 
-my $sth = $dbh->prepare('SELECT status FROM updates WHERE analyzed = 0 ORDER BY status_id ASC');
+my $sth = $dbh->prepare('SELECT status_text FROM statuses WHERE analyzed = 0 ORDER BY status_id ASC');
 $sth->execute();
 while(my @row = $sth->fetchrow_array)
 {

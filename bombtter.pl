@@ -17,6 +17,10 @@ use Bombtter;
 use Bombtter::Fetcher;
 use Bombtter::Analyzer;
 
+my $LOCKDIR = '.bombtter_lock';
+
+my @source_name = ('Twitter search', 'followers');
+
 my $conf = load_config;
 set_terminal_encoding($conf);
 
@@ -24,24 +28,72 @@ logger('main', '$Id$');
 
 if(!defined($ARGV[0]))
 {
-	die("usage: bombtter.pl [fetch|post|both]\n");
+	die("usage: bombtter.pl [auto|fetch|post|both] [-1|0|1] [-1|0|1]\n");
 }
 
-logger('main', 'mode: ' . $ARGV[0]);
+my $mode = $ARGV[0];
+
+my $scrape_source = $ARGV[1] || 0;
+my $post_source   = $ARGV[2] || -1;
+if($scrape_source > $#source_name || $scrape_source < -1 ||
+   $post_source > $#source_name || $post_source < -1)
+{
+	die("invalid source\n");
+}
+
+if($mode eq 'auto')
+{
+	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+		localtime(time);
+	print $min . "\n";
+	if(($min+10) % 20 == 0)
+	{
+		$mode          = 'both';
+		$scrape_source = 0;      # search only
+		$post_source   = -1;     # search + followers
+	}
+	elsif($min % 10 == 0)
+	{
+		$mode          = 'both';
+		$scrape_source = 1;      # followers only
+		$post_source   = -1;     # search + followers
+	}
+	else
+	{
+		$mode          = 'both';
+		$scrape_source = 1;      # followers only
+		$post_source   = 1;      # followers only
+	}
+}
+
+logger('main', 'mode: ' . $mode);
+logger('main', 'source for scrape: ' . $source_name[$scrape_source]);
+if($post_source == -1)
+{
+	logger('main', 'source for post: all');
+}
+else
+{
+	logger('main', 'source for post: ' . $source_name[$post_source]);
+}
+
+&bombtter_lock;
 
 my $dbh = db_connect($conf);
 
-if($ARGV[0] eq 'fetch' || $ARGV[0] eq 'both')
+if($mode eq 'fetch' || $mode eq 'both')
 {
-	&bombtter_scraper($conf, $dbh);
+	&bombtter_scraper($conf, $dbh, $scrape_source);
 	&bombtter_analyzer($conf, $dbh);
 }
-if($ARGV[0] eq 'post' || $ARGV[0] eq 'both')
+if($mode eq 'post' || $mode eq 'both')
 {
-	&bombtter_publisher($conf, $dbh);
+	&bombtter_publisher($conf, $dbh, $post_source);
 }
 
 $dbh->disconnect;
+
+&bombtter_unlock;
 exit;
 
 
@@ -52,14 +104,18 @@ sub bombtter_scraper
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
+	my $source = shift || 0;
+
 	logger('scraper', 'running scraper');
+	logger('scraper', 'source: ' . $source_name[$source]);
 
 	my $ignore_name = $conf->{'twitter_username'};
 	logger('scraper', "ignore: $ignore_name");
 
-	$dbh->do('CREATE TABLE updates (status_id INTEGER UNIQUE, twiturl TEXT, name TEXT, screen_name TEXT, status TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, analyzed INTEGER)');
+	$dbh->do('CREATE TABLE statuses (status_id INTEGER UNIQUE, permalink TEXT, screen_name TEXT, name TEXT, status_text TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, analyzed INTEGER)');
 
-	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM updates ORDER BY status_id DESC LIMIT 1');
+	# ソースごとのローカル最新ステータス ID を取得
+	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM statuses WHERE source = ' . $source . ' ORDER BY status_id DESC LIMIT 1');
 	my $local_latest_status_id = $hashref->{'status_id'} || 0;
 	logger('scraper', "Latest status_id = $local_latest_status_id");
 
@@ -72,35 +128,53 @@ sub bombtter_scraper
 	# リモートの(1ページの)一番古い番号がローカルの一番新しい番号より大きければ
 	# 未取得のデータがある
 	my $sth = $dbh->prepare(
-		'INSERT INTO updates (status_id, twiturl, name, screen_name, status)' .
-		' VALUES (?, ?, ?, ?, ?)');
+		'INSERT OR IGNORE INTO statuses (status_id, permalink, screen_name, name, status_text, source)' .
+		' VALUES (?, ?, ?, ?, ?, ?)');
 	while($remote_earliest_status_id >= $local_latest_status_id && $try < $try_max)
 	{
-		logger('scraper', "sleeping 5 sec ...");
-		sleep(5);
+		my $r = [];
+		if($source == 0)
+		{
+			logger('scraper', "sleeping 5 sec ...");
+			sleep(5);
+	
+			my $buf = fetch_html($try + 1);
+			#my $buf = read_html('targets/twsearch.html');
+			die if(!defined($buf));
+	
+			#$r = scrape_html($buf);
+			$r = scrape_html_regexp($buf);
+			die if(!defined($r));
+	
+			#my $uri = get_uri($try + 1);
+			#die if(!defined($uri));
+			#
+			#$r = scrape_html(new URI($uri));
+			#die if(!defined($r));
 
-		my $buf = fetch_html($try + 1);
-		#my $buf = read_html('targets/twsearch.html');
-		die if(!defined($buf));
+			$remote_earliest_status_id = $r->{'earliest_status_id'};
+		}
+		elsif($source == 1)
+		{
+			$r = fetch_followers($conf->{'twitter_username'},
+								 $conf->{'twitter_password'});
+			die if(!defined($r));
 
-		#my $r = scrape_html($buf);
-		my $r = scrape_html_regexp($buf);
-		die if(!defined($r));
+			# 強制的にリモートの最古 < ローカルの最新になるようにする
+			$remote_earliest_status_id = -1;
+		}
+		else
+		{
+			die;
+		}
 
-		#my $uri = get_uri($try + 1);
-		#die if(!defined($uri));
-		#
-		#my $r = scrape_html(new URI($uri));
-		#die if(!defined($r));
-
-		$remote_earliest_status_id = $r->{'earliest_status_id'};
 
 		logger('scraper', "remote: $remote_earliest_status_id / local: $local_latest_status_id");
 
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
-		foreach(@{$r->{'updates'}})
+		foreach(@{$r->{'statuses'}})
 		{
-			if($_->{'name'} =~ /^$ignore_name$/)
+			if($_->{'screen_name'} =~ /^$ignore_name$/)
 			{
 				next;
 			}
@@ -109,13 +183,14 @@ sub bombtter_scraper
 			{
 				# ローカルの最新より新しいデータ
 				logger('scraper',
-					   $_->{'name'} . ' ' .
-					   $_->{'status_id'} . ' ' . $_->{'status'});
+					   $_->{'screen_name'} . ' ' .
+					   $_->{'status_id'} . ' ' . $_->{'status_text'});
 				$sth->execute($_->{'status_id'},
-							  $_->{'twiturl'},
-							  $_->{'name'},
+							  $_->{'permalink'},
 							  $_->{'screen_name'},
-							  $_->{'status'});
+							  $_->{'name'},
+							  $_->{'status_text'},
+							  $source);
 				$inserted++;
 			}
 		}
@@ -139,9 +214,9 @@ sub bombtter_analyzer
 
 	logger('analyzer', 'running analyzer');
 
-	$dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, posted_at TIMESTAMP)');
+	$dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, posted_at TIMESTAMP)');
 
-	my $sth = $dbh->prepare('SELECT * FROM updates WHERE analyzed IS NULL ORDER BY status_id DESC');
+	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
 
 	my @analyze_ok_ids = ();
@@ -154,13 +229,14 @@ sub bombtter_analyzer
 	}
 
 	my $sth_insert = $dbh->prepare(
-		'INSERT INTO bombs (status_id, target) VALUES (?, ?)');
+		'INSERT OR IGNORE INTO bombs (status_id, target, source) VALUES (?, ?, ?)');
 	$dbh->begin_work;
 	while(my $update = $sth->fetchrow_hashref)
 	{
 		#push(@targets, $update->{'status'});
 		my $status_id = $update->{'status_id'};
-		my $target = $update->{'status'};
+		my $target = $update->{'status_text'};
+		my $source = $update->{'source'};
 
 		logger('analyzer', "target: " . $target);
 
@@ -171,7 +247,7 @@ sub bombtter_analyzer
 		if(defined($bombed))
 		{
 			push(@analyze_ok_ids, $status_id);
-			$sth_insert->execute($status_id, $bombed);
+			$sth_insert->execute($status_id, $bombed, $source);
 			logger('analyzer', "result: " . $bombed);
 		}
 		else
@@ -182,7 +258,7 @@ sub bombtter_analyzer
 
 		# fetchrow 中のテーブルを update しようとすると怒られる(2008/03/17)
 		#my $sth_update = $dbh->prepare(
-		#	'UPDATE updates SET analyzed = ? WHERE status_id = ?');
+		#	'UPDATE statuses SET analyzed = ? WHERE status_id = ?');
 		#$sth_update->execute($analyze_result, $status_id);
 	}
 	$dbh->commit;
@@ -190,7 +266,7 @@ sub bombtter_analyzer
 	$sth->finish;
 
 	$sth = $dbh->prepare(
-		'UPDATE updates SET analyzed = ? WHERE status_id = ?');
+		'UPDATE statuses SET analyzed = ? WHERE status_id = ?');
 	$dbh->begin_work;
 	foreach(@analyze_ok_ids)
 	{
@@ -211,24 +287,44 @@ sub bombtter_publisher
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
+	my $limit_source = shift || -1;
+
 	logger('publisher', 'running publisher');
+	if($limit_source >= 0)
+	{
+		logger('publisher', 'limit source: ' . $source_name[$limit_source]);
+	}
 
 	my $enable_posting = $conf->{'enable_posting'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
-	my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
+	my $sql;
+
+	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
+	if($limit_source >= 0)
+	{
+		$sql .= ' AND source = ' . $limit_source;
+	}
+	my $hashref = $dbh->selectrow_hashref($sql);
 	my $n_unposted = $hashref->{'count'};
-	logger('publisher', "Unposted bombs: $n_unposted");
+	logger('publisher', "bombs in queue: $n_unposted");
 
 	my @posts = ();
 	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
-	my $sth = $dbh->prepare(
+	$sql =
 		'SELECT *, (' .
 		' SELECT COUNT(*) FROM bombs co ' .
 		'  WHERE co.target = li.target' .
 		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
 		'  GROUP BY co.target) AS count ' .
-		'FROM bombs li WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
+		'FROM bombs li WHERE posted_at IS NULL ';
+	if($limit_source >= 0)
+	{
+		$sql .= 'AND source = ' . $limit_source . ' ';
+	}
+	$sql .= 'ORDER BY status_id ASC LIMIT ?';
+	my $sth = $dbh->prepare($sql);
+
 	# FIXME 複数個を一度に post する場合は count の計算をちゃんとしないとない
 	#       (全部 post した後で posted_at が更新されるため)
 	$sth->execute($limit);
@@ -333,5 +429,23 @@ sub bombtter_publisher
 	logger('publisher', "posted $n_posted bombs.");
 
 	return 1;
+}
+
+sub bombtter_lock
+{
+	my $retry = 5;
+	while(!mkdir($LOCKDIR, 0755))
+	{
+		if(--$retry <= 0)
+		{
+			logger('lock', 'lock timeout');
+			die;
+		}
+	}
+}
+
+sub bombtter_unlock
+{
+	rmdir($LOCKDIR);
 }
 

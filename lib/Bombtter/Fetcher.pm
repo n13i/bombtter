@@ -14,12 +14,13 @@ use Exporter;
 use vars qw(@ISA @EXPORT $VERSION);
 $VERSION = "0.13";
 @ISA = qw(Exporter);
-@EXPORT = qw(get_uri fetch_html read_html scrape_html_regexp scrape_html);
+@EXPORT = qw(get_uri fetch_html read_html scrape_html_regexp scrape_html fetch_followers);
 
 use LWP::UserAgent;
 use Encode;
 use Web::Scraper;
 use URI;
+use Net::Twitter;
 
 
 sub get_uri
@@ -90,12 +91,12 @@ sub scrape_html_regexp
 	{
 		my $table = $1;
 
-		my $r_updates = [];
+		my $r_statuses = [];
 		my $earliest_status_id = 99999999999;
 
 		foreach($table =~ m{<tr>(.+?)</tr>}gmsx)
 		{
-			my ($name, $screen_name, $status, $twiturl, $status_id);
+			my ($name, $screen_name, $status_text, $permalink, $status_id);
 
 			if(m{
 				<td\swidth="10%">.+?</td>\s+
@@ -107,27 +108,23 @@ sub scrape_html_regexp
 				<td\swidth="5%">\s+<a\shref=\"([^\"]+?)\"[^>]*?>.+?</td>\s+
 				}msx)
 			{
-				$screen_name = $1;
-				$name = $2;
-				$status = $3;
-				$twiturl = $4;
-				($status_id) = $twiturl =~ /statuses\/(\d+)/;
+				$name = $1;
+				$screen_name = $2;
+				$status_text = $3;
+				$permalink = $4;
+				($status_id) = $permalink =~ /statuses\/(\d+)/;
 
-				# @ リンクの除去
-				$status =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
-				# <a href="~"> の除去
-				$status =~ s/<a\s+(?:.+?)?href=\"([^\"]+)\"[^>]*>.+?<\/a>/$1/g;
+				$status_text = &_normalize_status_text($status_text);
 
 				#print "$name $screen_name $twiturl $status_id\n";
 				#print "$status\n---\n";
 
-				# FIXME name と screen_name が Twitter API と逆
-				push(@$r_updates, {
+				push(@$r_statuses, {
 					'status_id'   => $status_id,
-					'twiturl'     => $twiturl,
+					'permalink'   => $permalink,
 					'name'        => $name,
 					'screen_name' => $screen_name,
-					'status'      => $status,
+					'status_text' => $status_text,
 				});
 
 				if($status_id < $earliest_status_id)
@@ -139,7 +136,7 @@ sub scrape_html_regexp
 
 		return {
 			'earliest_status_id' => $earliest_status_id,
-			'updates' => $r_updates,
+			'statuses' => $r_statuses,
 		};
 	}
 	else
@@ -158,23 +155,24 @@ sub scrape_html
 	my $trimmed_text = [ 'TEXT', sub { s/^\s*(.+?)\s*$/$1/ } ];
 	my $list = scraper {
 		process 'table.list tbody tr',
-				'updates[]' => scraper {
+				'statuses[]' => scraper {
 					process 'td:nth-child(1) a',
 					'twiturl_home' => '@href';
 					process 'td:nth-child(1) a img',
-							'iconurl' => '@src',
-							'profile' => '@alt';
+							'profile_image_url' => '@src',
+							'description' => '@alt';
 
 					process 'td:nth-child(2)',
-							'screen_name' => [ 'TEXT', sub { s/^\s*(.+?)\s+\@[^@]+$/$1/ } ];
+							'name' => [ 'TEXT', sub { s/^\s*(.+?)\s+\@[^@]+$/$1/ } ];
 					process 'td:nth-child(2) a',
-							'name' => $trimmed_text;
+							'screen_name' => $trimmed_text;
 
+					# FIXME リンク除去等の処理が必要
 					process 'td:nth-child(3)',
-							'status' => $trimmed_text;
+							'status_text' => $trimmed_text;
 
 					process 'td:nth-child(4) a',
-							'web' => '@href';
+							'url' => '@href';
 
 					process 'td:nth-child(5) a',
 							'twiturl' => '@href',
@@ -186,29 +184,29 @@ sub scrape_html
 					process 'td:nth-child(7)',
 							'timestamp' => $trimmed_text;
 
-					result 'twiturl_home', 'iconurl', 'profile',
-						   'screen_name', 'name',
-						   'status',
-						   'web',
-						   'twiturl', 'status_id',
+					result 'twiturl_home', 'profile_image_url', 'description',
+						   'name', 'screen_name',
+						   'status_text',
+						   'url',
+						   'permalink', 'status_id',
 						   'from',
 						   'timestamp';
 				};
 
-		result 'updates';
+		result 'statuses';
 	};
 
-	my $r_updates = $list->scrape($html);
+	my $r_statuses = $list->scrape($html);
 	#use YAML;
-	#print Dump($r_updates);
+	#print Dump($r_statuses);
 
-	if($#$r_updates == -1)	
+	if($#$r_statuses == -1)	
 	{
 		print "empty list: maybe scraping error?\n";
 		return undef;
 	}
 
-	foreach(@$r_updates)
+	foreach(@$r_statuses)
 	{
 		if($_->{'status_id'} < $earliest_status_id)
 		{
@@ -218,8 +216,89 @@ sub scrape_html
 
 	return {
 		'earliest_status_id' => $earliest_status_id,
-		'updates' => $r_updates,
+		'statuses' => $r_statuses,
 	};
+}
+
+sub fetch_followers
+{
+	my $username = shift || return undef;
+	my $password = shift || return undef;
+
+	my $target_str = '爆発しろ';
+
+	my $twit = Net::Twitter->new(username => $username, password => $password);
+	my $followers = $twit->followers();
+	#use YAML;
+	#my $followers = YAML::LoadFile('test/followers.yaml');
+	#utf8::decode($followers);
+	if(!defined($followers))
+	{
+		print "can't get followers\n";
+		return undef;
+	}
+
+	my $r_statuses = [];
+	my $earliest_status_id = 99999999999;
+
+	foreach(@$followers)
+	{
+		if($_->{protected})
+		{
+			print $_->{screen_name} . " is protected; skip.\n";
+			next;
+		}
+
+		if($_->{status}->{text} !~ /$target_str/)
+		{
+			next;
+		}
+
+		my $status_id   = $_->{status}->{id};
+		my $screen_name = '@' . $_->{screen_name};
+		my $name        = $_->{name};
+		my $permalink   = 'http://twitter.com/' . $_->{screen_name} . '/statuses/' . $status_id;
+		my $status_text = $_->{status}->{text};
+
+		#$status_text = decode('utf8', $status_text);
+		#$status_text = Dump($status_text);
+		#use JSON::Any;
+		#$status_text = JSON::Any->decode($status_text);
+		#$status_text = &_normalize_status_text($status_text);
+
+		#print $status_text . "\n";
+
+		push(@$r_statuses, {
+			'status_id'   => $status_id,
+			'permalink'   => $permalink,
+			'name'        => $name,
+			'screen_name' => $screen_name,
+			'status_text' => $status_text,
+		});
+
+		if($_->{status}->{id} < $earliest_status_id)
+		{
+			$earliest_status_id = $_->{status}->{id};
+		}
+	}
+
+	return {
+		'earliest_status_id' => $earliest_status_id,
+		'statuses' => $r_statuses,
+	};
+}
+
+sub _normalize_status_text
+{
+	my $s = shift || '';
+
+	# @ リンクの除去
+	$s =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
+
+	# <a href="~"> の除去
+	$s =~ s/<a\s+(?:.+?)?href=\"([^\"]+)\"[^>]*>.+?<\/a>/$1/g;
+
+	return $s;
 }
 
 1;
