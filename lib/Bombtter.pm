@@ -2,7 +2,7 @@ package Bombtter;
 
 # もろもろ
 # 2008/03/17 naoh
-# $Id: Bombtter.pm 46 2008-03-26 11:47:01Z naoh $
+# $Id$
 
 use warnings;
 use strict;

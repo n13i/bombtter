@@ -3,7 +3,7 @@ package Bombtter::Analyzer;
 
 # 爆発物検出
 # 2008/03/17 naoh
-# $Id: Analyzer.pm 45 2008-03-26 10:58:39Z naoh $
+# $Id$
 
 use warnings;
 use strict;

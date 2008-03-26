@@ -3,7 +3,7 @@ package Bombtter::Fetcher;
 
 # Twitter 検索をスクレイピングする
 # 2008/03/17 naoh
-# $Id: Fetcher.pm 47 2008-03-26 18:05:32Z naoh $
+# $Id$
 
 use warnings;
 use strict;
