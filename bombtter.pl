@@ -20,14 +20,14 @@ use Bombtter::Analyzer;
 my $conf = load_config;
 set_terminal_encoding($conf);
 
-logger('$Id$');
+logger('main', '$Id$');
 
 if(!defined($ARGV[0]))
 {
 	die("usage: bombtter.pl [fetch|post|both]\n");
 }
 
-logger('mode: ' . $ARGV[0]);
+logger('main', 'mode: ' . $ARGV[0]);
 
 my $dbh = db_connect($conf);
 
@@ -52,16 +52,16 @@ sub bombtter_scraper
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
-	logger('running scraper');
+	logger('scraper', 'running scraper');
 
 	my $ignore_name = $conf->{'twitter_username'};
-	logger("ignore: $ignore_name");
+	logger('scraper', "ignore: $ignore_name");
 
 	$dbh->do('CREATE TABLE updates (status_id INTEGER UNIQUE, twiturl TEXT, name TEXT, screen_name TEXT, status TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, analyzed INTEGER)');
 
 	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM updates ORDER BY status_id DESC LIMIT 1');
 	my $local_latest_status_id = $hashref->{'status_id'} || 0;
-	logger("Latest status_id = $local_latest_status_id");
+	logger('scraper', "Latest status_id = $local_latest_status_id");
 
 
 	my $try = 0;
@@ -76,7 +76,7 @@ sub bombtter_scraper
 		' VALUES (?, ?, ?, ?, ?)');
 	while($remote_earliest_status_id >= $local_latest_status_id && $try < $try_max)
 	{
-		logger("sleeping 5 sec ...");
+		logger('scraper', "sleeping 5 sec ...");
 		sleep(5);
 
 		my $buf = fetch_html($try + 1);
@@ -95,7 +95,7 @@ sub bombtter_scraper
 
 		$remote_earliest_status_id = $r->{'earliest_status_id'};
 
-		logger("remote: $remote_earliest_status_id / local: $local_latest_status_id");
+		logger('scraper', "remote: $remote_earliest_status_id / local: $local_latest_status_id");
 
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
 		foreach(@{$r->{'updates'}})
@@ -108,7 +108,8 @@ sub bombtter_scraper
 			if($_->{'status_id'} > $local_latest_status_id)
 			{
 				# ローカルの最新より新しいデータ
-				logger($_->{'name'} . ' ' .
+				logger('scraper',
+					   $_->{'name'} . ' ' .
 					   $_->{'status_id'} . ' ' . $_->{'status'});
 				$sth->execute($_->{'status_id'},
 							  $_->{'twiturl'},
@@ -124,7 +125,7 @@ sub bombtter_scraper
 	}
 	$sth->finish;
 
-	logger("$inserted inserted.");
+	logger('scraper', "$inserted inserted.");
 
 	return 1;
 }
@@ -136,7 +137,7 @@ sub bombtter_analyzer
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
-	logger('running analyzer');
+	logger('analyzer', 'running analyzer');
 
 	$dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, posted_at TIMESTAMP)');
 
@@ -161,7 +162,7 @@ sub bombtter_analyzer
 		my $status_id = $update->{'status_id'};
 		my $target = $update->{'status'};
 
-		logger("target: " . $target);
+		logger('analyzer', "target: " . $target);
 
 		my $bombed = analyze($target, $mecab_opts);
 
@@ -171,12 +172,12 @@ sub bombtter_analyzer
 		{
 			push(@analyze_ok_ids, $status_id);
 			$sth_insert->execute($status_id, $bombed);
-			logger("result: " . $bombed);
+			logger('analyzer', "result: " . $bombed);
 		}
 		else
 		{
 			push(@analyze_ng_ids, $status_id);
-			logger("result:");
+			logger('analyzer', "result:");
 		}
 
 		# fetchrow 中のテーブルを update しようとすると怒られる(2008/03/17)
@@ -210,14 +211,14 @@ sub bombtter_publisher
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
-	logger('running publisher');
+	logger('publisher', 'running publisher');
 
 	my $enable_posting = $conf->{'enable_posting'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
 	my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
 	my $n_unposted = $hashref->{'count'};
-logger("Unposted bombs: $n_unposted");
+	logger('publisher', "Unposted bombs: $n_unposted");
 
 	my @posts = ();
 	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
@@ -265,7 +266,7 @@ logger("Unposted bombs: $n_unposted");
 
 			if(!defined($subst))
 			{
-				logger("WARNING: subst is undef");
+				logger('publisher', "WARNING: subst is undef");
 			}
 
 			if(int(rand(100)) < 30 || !defined($subst))
@@ -306,15 +307,15 @@ logger("Unposted bombs: $n_unposted");
 	{
 		my $post = $_->{'post'};
 
-		logger("post: $post");
+		logger('publisher', "post: $post");
 
 		my $status = undef;
 		if($enable_posting)
 		{
 			$status = $twit->update(encode('utf8', $post));
 
-			logger('update: code ' . $twit->http_code . ' ' . $twit->http_message);
-			logger(Dump($status));
+			logger('publisher', 'update: code ' . $twit->http_code . ' ' . $twit->http_message);
+			logger('publisher', Dump($status));
 
 			if($twit->http_code == 200)
 			{
@@ -329,7 +330,7 @@ logger("Unposted bombs: $n_unposted");
 	}
 	$sth->finish;
 
-	logger("posted $n_posted bombs.");
+	logger('publisher', "posted $n_posted bombs.");
 
 	return 1;
 }

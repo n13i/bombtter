@@ -43,9 +43,10 @@ sub db_connect
 
 sub logger
 {
+	my $domain = shift || '';
 	my $msg = shift || '';
 	my $dt = DateTime->now(time_zone => '+0900'); # fixme
-	print '[' . $dt->ymd . ' ' . $dt->hms . '] ' . $msg . "\n";
+	print '[' . $dt->ymd . ' ' . $dt->hms . '] ' . $domain . ': ' . $msg . "\n";
 }
 
 1;
