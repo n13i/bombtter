@@ -3,7 +3,7 @@ package Bombtter::Analyzer;
 
 # 爆発物検出
 # 2008/03/17 naoh
-# $Id$
+# $Id: Analyzer.pm 45 2008-03-26 10:58:39Z naoh $
 
 use warnings;
 use strict;
@@ -11,12 +11,12 @@ use utf8;
 
 use Exporter;
 
-use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.13";
+use vars qw(@ISA @EXPORT $VERSION $revision);
+$VERSION = '0.20';
+$revision = '$Rev$';
 @ISA = qw(Exporter);
 @EXPORT = qw(analyze);
 
-#use Bombtter;
 use MeCab;
 use Encode;
 

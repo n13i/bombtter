@@ -3,7 +3,7 @@ package Bombtter::Fetcher;
 
 # Twitter 検索をスクレイピングする
 # 2008/03/17 naoh
-# $Id$
+# $Id: Fetcher.pm 47 2008-03-26 18:05:32Z naoh $
 
 use warnings;
 use strict;
@@ -11,8 +11,9 @@ use utf8;
 
 use Exporter;
 
-use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.13";
+use vars qw(@ISA @EXPORT $VERSION $revision);
+$VERSION = '0.20';
+$revision = '$Rev$';
 @ISA = qw(Exporter);
 @EXPORT = qw(get_uri fetch_html read_html scrape_html_regexp scrape_html fetch_followers);
 

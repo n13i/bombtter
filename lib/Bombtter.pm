@@ -2,7 +2,7 @@ package Bombtter;
 
 # もろもろ
 # 2008/03/17 naoh
-# $Id$
+# $Id: Bombtter.pm 46 2008-03-26 11:47:01Z naoh $
 
 use warnings;
 use strict;
@@ -10,8 +10,9 @@ use utf8;
 
 use Exporter;
 
-use vars qw(@ISA @EXPORT $VERSION);
-$VERSION = "0.13";
+use vars qw(@ISA @EXPORT $VERSION $revision);
+$VERSION = '0.20';
+$revision = '$Rev$';
 @ISA = qw(Exporter);
 @EXPORT = qw(load_config set_terminal_encoding db_connect logger);
 

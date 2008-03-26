@@ -106,7 +106,7 @@ sub bombtter_scraper
 
 	my $source = shift || 0;
 
-	logger('scraper', 'running scraper');
+	logger('scraper', 'running scraper ' . $Bombtter::Fetcher::revision);
 	logger('scraper', 'source: ' . $source_name[$source]);
 
 	my $ignore_name = $conf->{'twitter_username'};
@@ -212,7 +212,7 @@ sub bombtter_analyzer
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
-	logger('analyzer', 'running analyzer');
+	logger('analyzer', 'running analyzer ' . $Bombtter::Analyzer::revision);
 
 	$dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, posted_at TIMESTAMP)');
 
