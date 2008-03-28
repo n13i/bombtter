@@ -182,9 +182,10 @@ sub bombtter_scraper
 			if($_->{'status_id'} > $local_latest_status_id)
 			{
 				# ローカルの最新より新しいデータ
-				logger('scraper',
-					   $_->{'screen_name'} . ' ' .
-					   $_->{'status_id'} . ' ' . $_->{'status_text'});
+				logger('scraper', 'insert: ' .
+					   $_->{'status_id'} . '|' .
+					   $_->{'screen_name'} . '|' .
+					   $_->{'status_text'});
 				$sth->execute($_->{'status_id'},
 							  $_->{'permalink'},
 							  $_->{'screen_name'},
@@ -192,6 +193,13 @@ sub bombtter_scraper
 							  $_->{'status_text'},
 							  $source);
 				$inserted++;
+			}
+			else
+			{
+				logger('scraper', 'ignore: ' .
+					   $_->{'status_id'} . '|' .
+					   $_->{'screen_name'} . '|' .
+					   $_->{'status_text'});
 			}
 		}
 		$dbh->commit;
