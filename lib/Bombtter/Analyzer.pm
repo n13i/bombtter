@@ -131,7 +131,7 @@ sub analyze
 		if($outro =~ m{^(
 				は|な|とか|とは|っは|って|よ[^。]|
 				で[^す]|と(思|おも)(う|っ)|と(言|いう|いえ)|
-				から
+				から|(しか|然)り
 			)}ox)
 		{
 			print "  skipped (due to outro): $target\n";

@@ -167,7 +167,7 @@ sub bombtter_scraper
 		{
 			die;
 		}
-
+		logger('scraper', 'got ' . ($#{$r->{'statuses'}}+1) . ' status(es)');
 
 		logger('scraper', "remote: $remote_earliest_status_id / local: $local_latest_status_id");
 
