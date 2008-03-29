@@ -17,7 +17,8 @@ use Bombtter;
 use Bombtter::Fetcher;
 use Bombtter::Analyzer;
 
-my $LOCKDIR = '.bombtter_lock';
+my $LOCKDIR = 'lock/';
+my $LOCKFILE = 'lock';
 
 my @source_name = ('Twitter search', 'followers');
 
@@ -77,7 +78,7 @@ else
 	logger('main', 'source for post: ' . $source_name[$post_source]);
 }
 
-&bombtter_lock;
+my $lfh = &bombtter_lock or &error('locked');
 
 my $dbh = db_connect($conf) or &error('db_connect failed');
 
@@ -93,7 +94,7 @@ if($mode eq 'post' || $mode eq 'both')
 
 $dbh->disconnect;
 
-&bombtter_unlock;
+&bombtter_unlock($lfh);
 exit;
 
 
@@ -440,29 +441,65 @@ sub bombtter_publisher
 	return 1;
 }
 
+#sub bombtter_lock
+#{
+#	my $retry = 5;
+#	while(!mkdir($LOCKDIR, 0755))
+#	{
+#		if(--$retry <= 0)
+#		{
+#			logger('lock', 'lock timeout');
+#			&error;
+#		}
+#	}
+#}
+#
+#sub bombtter_unlock
+#{
+#	rmdir($LOCKDIR);
+#}
+
 sub bombtter_lock
 {
-	my $retry = 5;
-	while(!mkdir($LOCKDIR, 0755))
+	my %lfh = (dir => $LOCKDIR, basename => $LOCKFILE,
+			   timeout => 120,  trytime => 5, @_);
+	$lfh{path} = $lfh{dir} . $lfh{basename};
+
+	for(my $i = 0; $i < $lfh{trytime}; $i++, sleep 1)
 	{
-		if(--$retry <= 0)
+		return \%lfh if(rename($lfh{path}, $lfh{current} = $lfh{path} . time));
+	}
+
+	opendir(LOCKDIR, $lfh{dir});
+	my @filelist = readdir(LOCKDIR);
+	closedir(LOCKDIR);
+	foreach(@filelist)
+	{
+		if(/^$lfh{basename}(\d+)/)
 		{
-			logger('lock', 'lock timeout');
-			&error;
+			return \%lfh if(time - $1 > $lfh{timeout} and
+				rename($lfh{dir} . $_, $lfh{current} = $lfh{path} . time));
+			last;
 		}
 	}
+
+	return undef;
 }
 
 sub bombtter_unlock
 {
-	rmdir($LOCKDIR);
+	my $lfh = shift;
+	rename($lfh->{current}, $lfh->{path});
 }
+
 
 sub error
 {
 	my $msg = shift || '';
+	my $lfh = shift || undef;
 
 	logger('error', $msg);
+	&bombtter_unlock($lfh) if(defined($lfh));
 	exit;
 }
 

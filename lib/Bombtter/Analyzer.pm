@@ -51,11 +51,18 @@ sub analyze
 	# FIXME 英単語間の空白の扱い
 	#$target =~ s/([^$ascii])\s([$ascii]+)\s/$1$2/g;
 	#$target =~ s/^([^\@][$ascii]+)\s([^$ascii])/$1$2/g;
+	my $target_name = '';
+	if($target =~ /^(\@[$ascii]+\s*)(.+)$/)
+	{
+		$target_name = $1;
+		$target = $2;
+	}
 	$target =~ s/([^$ascii])\s([$ascii]+)/$1$2/g;
 	$target =~ s/([$ascii])\s([^$ascii]+)/$1$2/g;
-	$target =~ s/^(\@[$ascii]+)\s?/$1 /g;
+	#$target =~ s/^(\@[$ascii]+)\s?/$1 /g;
+	$target = $target_name . $target;
 
-	my $name = '\x{0000}-\x{007f}';
+	my $name = '\x{0000}-\x{001f}\x{0021}-\x{007e}';
 
 	#$target =~ s/^([^\@][$ascii]+)\s([$ascii])/$1_$2/g;
 
