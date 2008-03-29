@@ -5,6 +5,7 @@
 # 2008/03/16 naoh
 # $Id$
 
+use warnings;
 use strict;
 use utf8;
 
@@ -375,13 +376,14 @@ sub bombtter_publisher
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 			localtime(time);
 		if($target !~ /^\@?$conf->{twitter_username}\s*/
-		   #&& $mon+1 == 4 && $mday == 1
+		   && $mon+1 == 4 && $mday == 1
 		)
 		{
 			my @tpls = (
 				'今、%sが静かなブーム！',
-				'ゆるふわ愛され系%sが爆発しました。',
-				'%s(笑)',
+				#'%sに淡い恋心を抱いています。',
+				#'%s？いいえ、ケフィアです。',
+				#'%sかと言われると、そうでもない。',
 			);
 
 			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
