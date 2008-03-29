@@ -21,14 +21,14 @@ my $LOCKDIR = '.bombtter_lock';
 
 my @source_name = ('Twitter search', 'followers');
 
-my $conf = load_config;
+my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
 
 logger('main', '$Id$');
 
 if(!defined($ARGV[0]))
 {
-	die("usage: bombtter.pl [auto|fetch|post|both] [-1|0|1] [-1|0|1]\n");
+	&error("usage: bombtter.pl [auto|fetch|post|both] [-1|0|1] [-1|0|1]\n");
 }
 
 my $mode = $ARGV[0];
@@ -38,7 +38,7 @@ my $post_source   = $ARGV[2] || -1;
 if($scrape_source > $#source_name || $scrape_source < -1 ||
    $post_source > $#source_name || $post_source < -1)
 {
-	die("invalid source\n");
+	&error("invalid source\n");
 }
 
 if($mode eq 'auto')
@@ -46,13 +46,13 @@ if($mode eq 'auto')
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		localtime(time);
 	print $min . "\n";
-	if(($min+10) % 20 == 0)
+	if(($min+10) % ($conf->{automode_fetchinterval} || 20) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 0;      # search only
 		$post_source   = -1;     # search + followers
 	}
-	elsif($min % 10 == 0)
+	elsif($min % ($conf->{automode_postinterval} || 10) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 1;      # followers only
@@ -79,7 +79,7 @@ else
 
 &bombtter_lock;
 
-my $dbh = db_connect($conf);
+my $dbh = db_connect($conf) or &error('db_connect failed');
 
 if($mode eq 'fetch' || $mode eq 'both')
 {
@@ -140,11 +140,11 @@ sub bombtter_scraper
 	
 			my $buf = fetch_html($try + 1);
 			#my $buf = read_html('targets/twsearch.html');
-			die if(!defined($buf));
+			&error if(!defined($buf));
 	
 			#$r = scrape_html($buf);
 			$r = scrape_html_regexp($buf);
-			die if(!defined($r));
+			&error if(!defined($r));
 	
 			#my $uri = get_uri($try + 1);
 			#die if(!defined($uri));
@@ -158,14 +158,14 @@ sub bombtter_scraper
 		{
 			$r = fetch_followers($conf->{'twitter_username'},
 								 $conf->{'twitter_password'});
-			die if(!defined($r));
+			&error if(!defined($r));
 
 			# 強制的にリモートの最古 < ローカルの最新になるようにする
 			$remote_earliest_status_id = -1;
 		}
 		else
 		{
-			die;
+			&error;
 		}
 		logger('scraper', 'got ' . ($#{$r->{'statuses'}}+1) . ' status(es)');
 
@@ -429,7 +429,7 @@ sub bombtter_publisher
 			}
 			else
 			{
-				die('failed to update');
+				&error('failed to update');
 			}
 		}
 	}
@@ -448,7 +448,7 @@ sub bombtter_lock
 		if(--$retry <= 0)
 		{
 			logger('lock', 'lock timeout');
-			die;
+			&error;
 		}
 	}
 }
@@ -456,5 +456,13 @@ sub bombtter_lock
 sub bombtter_unlock
 {
 	rmdir($LOCKDIR);
+}
+
+sub error
+{
+	my $msg = shift || '';
+
+	logger('error', $msg);
+	exit;
 }
 

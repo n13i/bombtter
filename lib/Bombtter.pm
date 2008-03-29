@@ -23,13 +23,13 @@ use DBI;
 sub load_config
 {
 	my $conffile = shift || 'bombtter.conf';
-	my $conf = YAML::LoadFile($conffile) or die("$conffile:$!");
+	my $conf = YAML::LoadFile($conffile) or return undef;
 	return $conf;
 }
 
 sub set_terminal_encoding
 {
-	my $conf = shift || die;
+	my $conf = shift || return;
 	binmode STDIN, ":encoding($conf->{'terminal_encoding'})";
 	binmode STDOUT, ":encoding($conf->{'terminal_encoding'})";
 	binmode STDERR, ":encoding($conf->{'terminal_encoding'})";
@@ -37,7 +37,7 @@ sub set_terminal_encoding
 
 sub db_connect
 {
-	my $conf = shift || die;
+	my $conf = shift || return undef;
 	my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{'dbfile'}, '', '', {unicode => 1});
 	return $dbh;
 }
