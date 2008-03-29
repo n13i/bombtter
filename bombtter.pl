@@ -361,7 +361,7 @@ sub bombtter_publisher
 
 		if($target eq 'リア充' && $count > 1)
 		{
-			$result .= ' (' . $count . '回目)';
+			$result .= '(' . $count . '回目)';
 		}
 
 		if(int(rand(100)) < 5)
