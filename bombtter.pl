@@ -140,20 +140,16 @@ sub bombtter_scraper
 			logger('scraper', "sleeping 5 sec ...");
 			sleep(5);
 	
-			my $buf = fetch_html($try + 1);
-			#my $buf = read_html('targets/twsearch.html');
-			&error if(!defined($buf));
-	
-			#$r = scrape_html($buf);
-			$r = scrape_html_regexp($buf);
+			if($try == 0)
+			{
+				$r = fetch_rss();
+			}
+			else
+			{
+				$r = fetch_html($try + 1);
+			}
 			&error if(!defined($r));
 	
-			#my $uri = get_uri($try + 1);
-			#die if(!defined($uri));
-			#
-			#$r = scrape_html(new URI($uri));
-			#die if(!defined($r));
-
 			$remote_earliest_status_id = $r->{'earliest_status_id'};
 		}
 		elsif($source == 1)
@@ -340,36 +336,19 @@ sub bombtter_publisher
 	$sth->execute($limit);
 	while(my $update = $sth->fetchrow_hashref)
 	{
-		my $status_id = $update->{'status_id'};
-		my $target = $update->{'target'};
-		my $count = $update->{'count'} || 0;
+		my $status_id = $update->{status_id};
+		my $target = $update->{target};
+		my $count = $update->{count} || 0;
 
-		my $extra = '';
-		if(int(rand(100)) < 10)
-		{
-			my @extras = ('盛大に', 'ひっそりと', '派手に');
-			#$extra = $extras[int(rand($#extras+1))];
-		}
-
-		if($count > 1)
-		{
-			#$extra = 'また';
-			#$result = 'は今日も爆発しました。';
-		}
-
-		my $result = 'が' . $extra . '爆発しました。';
+		# post 内容の構築
+		my $result = 'が爆発しました。';
 
 		if($target eq 'リア充' && $count > 1)
 		{
 			$result .= '(' . $count . '回目)';
 		}
 
-		if(int(rand(100)) < 5)
-		{
-			#$result = 'は爆発しませんでした。';
-		}
-
-		if($target =~ /^\@?$conf->{'twitter_username'}\s*/)
+		if($target =~ /^\@?$conf->{twitter_username}\s*/)
 		{
 			# 身代わりに何か適当なものを爆発させる
 			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
@@ -380,23 +359,36 @@ sub bombtter_publisher
 				logger('publisher', "WARNING: subst is undef");
 			}
 
-			if(int(rand(100)) < 70 || !defined($subst))
-			{
+			#if(int(rand(100)) < 70 || !defined($subst))
+			#{
 				$result = 'が自爆しました。';
-			}
-			else
-			{
-				$result = 'の身代わりとして' . $subst . 'が爆発しました。';
-			}
+			#}
+			#else
+			#{
+			#	$result = 'の身代わりとして' . $subst . 'が爆発しました。';
+			#}
 		}
 
-		#my $post = '●~* ' . $target . $result;
-		#my $post = '[●~] ' . $target . $result;
-		#my $post = '●~＊ ' . $target . $result;
 		my $post = $target . $result;
 
+		# april mode check
+		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+			localtime(time);
+		if($target !~ /^\@?$conf->{twitter_username}\s*/
+		   #&& $mon+1 == 4 && $mday == 1
+		)
+		{
+			my @tpls = (
+				'今、%sが静かなブーム！',
+				'ゆるふわ愛され系%sが爆発しました。',
+				'%s(笑)',
+			);
+
+			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
+		}
+
 		# reply してしまわないように
-		if($target =~ /^\s*\@/)
+		if($post =~ /^\s*\@/)
 		{
 			$post = '. ' . $post;
 		}
@@ -447,24 +439,6 @@ sub bombtter_publisher
 	return 1;
 }
 
-#sub bombtter_lock
-#{
-#	my $retry = 5;
-#	while(!mkdir($LOCKDIR, 0755))
-#	{
-#		if(--$retry <= 0)
-#		{
-#			logger('lock', 'lock timeout');
-#			&error;
-#		}
-#	}
-#}
-#
-#sub bombtter_unlock
-#{
-#	rmdir($LOCKDIR);
-#}
-
 sub bombtter_lock
 {
 	my %lfh = (dir => $LOCKDIR, basename => $LOCKFILE,
@@ -497,7 +471,6 @@ sub bombtter_unlock
 	my $lfh = shift;
 	rename($lfh->{current}, $lfh->{path});
 }
-
 
 sub error
 {

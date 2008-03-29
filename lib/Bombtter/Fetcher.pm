@@ -15,7 +15,7 @@ use vars qw(@ISA @EXPORT $VERSION $revision);
 $VERSION = '0.20';
 $revision = '$Rev$';
 @ISA = qw(Exporter);
-@EXPORT = qw(get_uri fetch_html read_html scrape_html_regexp scrape_html fetch_followers);
+@EXPORT = qw(fetch_rss fetch_html read_html fetch_followers);
 
 use LWP::UserAgent;
 use Encode;
@@ -23,37 +23,69 @@ use Web::Scraper;
 use URI;
 use Net::Twitter;
 
+my $OFFSET_MAX = 5;
+my $SEARCH_KEYWORD = '爆発しろ';
 
-sub get_uri
+sub _urlencode
 {
-	my $offset = shift || 1;
+	my $str = shift;
 
-	my $offset_max = 5;
+	$str = encode('utf8', $str);
+	$str =~ s/([^?w])/'%'.unpack('H2', $1)/ego;
+	$str =~ tr/ a-z/+A-Z/;
+	$str = decode('utf8', $str);
 
-	if($offset > $offset_max)
+	return $str;
+}
+
+sub fetch_rss
+{
+	my $uri = 'http://twitter.1x1.jp/rss/search/?keyword='
+			  . &_urlencode($SEARCH_KEYWORD)
+			  . '&text=1';
+
+	print "Twitter search RSS ...\n";
+
+	my $content = &_fetch_uri($uri);
+	if(!defined($content))
 	{
 		return undef;
 	}
 
-	print "Twitter search (offset=$offset) ...\n";
+	$content = decode('utf8', $content);
 
-	my $search_keyword = '%E7%88%86%E7%99%BA%E3%81%97%E3%82%8D';
-
-	return 'http://twitter.1x1.jp/search/?keyword='
-		   . $search_keyword
-		   . '&lang=&text=1ja&offset=' . $offset . '&source=';
+	return &_parse_rss($content);
 }
 
 sub fetch_html
 {
 	my $offset = shift || 1;
 
-	my $uri = get_uri($offset);
-
-	if(!defined($uri))
+	if($offset > $OFFSET_MAX)
 	{
 		return undef;
 	}
+
+	my $uri = 'http://twitter.1x1.jp/search/?keyword='
+			  . &_urlencode($SEARCH_KEYWORD)
+			  . '&lang=&text=1ja&offset=' . $offset . '&source=';
+
+	print "Twitter search HTML (offset=$offset) ...\n";
+
+	my $content = &_fetch_uri($uri);
+	if(!defined($content))
+	{
+		return undef;
+	}
+
+	$content = decode('utf8', $content);
+
+	return &_scrape_html_regexp($content);
+}
+
+sub _fetch_uri
+{
+	my $uri = shift || return undef;
 
 	my $ua = LWP::UserAgent->new();
 	$ua->timeout(60);
@@ -66,7 +98,7 @@ sub fetch_html
 		return undef;
 	}
 
-	return decode('utf8', $res->content);
+	return $res->content;
 }
 
 sub read_html
@@ -79,10 +111,66 @@ sub read_html
 	my $buf = join('', <FH>);
 	close(FH);
 
-	return $buf;
+	return &_scrape_html_regexp($buf);
 }
 
-sub scrape_html_regexp
+sub _parse_rss
+{
+	my $buf = shift || return undef;
+
+	if($buf =~ m{<channel>(.+?)</channel>}msx)
+	{
+		my $channel = $1;
+
+		my $r_statuses = [];
+		my $earliest_status_id = 99999999999;
+
+		foreach($channel =~ m{<item>(.+?)</item>}gmsx)
+		{
+			my ($name, $screen_name, $status_text, $permalink, $status_id);
+
+			if(m{
+				<title>(\@.+?)\s+&lt;(.+?)&gt;</title>\s+
+				<description>(.+?)</description>\s+
+				<link>.+?\?id=(\d+)</link>\s+
+				}msx)
+			{
+				$screen_name = $1;
+				$name = $2;
+				$status_text = $3;
+				$status_id = $4;
+				$permalink = 'http://twitter.com/' . $screen_name . '/statuses/' . $status_id;
+
+				$status_text = &_normalize_status_text($status_text);
+
+				push(@$r_statuses, {
+					'status_id'   => $status_id,
+					'permalink'   => $permalink,
+					'name'        => $name,
+					'screen_name' => $screen_name,
+					'status_text' => $status_text,
+				});
+
+				if($status_id < $earliest_status_id)
+				{
+					$earliest_status_id = $status_id;
+				}
+			}
+		}
+
+		return {
+			'earliest_status_id' => $earliest_status_id,
+			'statuses' => $r_statuses,
+		};
+	}
+	else
+	{
+		print "RSS error: can't find channel\n";
+		return undef;
+	}
+}
+
+sub _scrape_html_regexp
 {
 	my $buf = shift || return undef;
 
@@ -147,7 +235,7 @@ sub scrape_html_regexp
 	}
 }
 
-sub scrape_html
+sub _scrape_html_web_scraper
 {
 	my $html = shift || return undef;
 
@@ -226,8 +314,6 @@ sub fetch_followers
 	my $username = shift || return undef;
 	my $password = shift || return undef;
 
-	my $target_str = '爆発しろ';
-
 	my $r_statuses = [];
 	my $earliest_status_id = 99999999999;
 
@@ -255,7 +341,7 @@ sub fetch_followers
 			next;
 		}
 
-		if($_->{status}->{text} !~ /$target_str/)
+		if($_->{status}->{text} !~ /$SEARCH_KEYWORD/)
 		{
 			next;
 		}
@@ -285,7 +371,7 @@ sub fetch_followers
 			next;
 		}
 
-		if($_->{text} !~ /$target_str/)
+		if($_->{text} !~ /$SEARCH_KEYWORD/)
 		{
 			next;
 		}

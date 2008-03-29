@@ -31,7 +31,8 @@ sub analyze
 	# FIXME スペースを含む英単語が分割されてしまう件
 	#my $seps = '。．、，！!？\?…‥・：ｗ（）「」『』\s';
 	#my $seps_woparen = '。．、，！!？\?…‥・：ｗ（）\s';
-	my $seps_woparen = '。．、，！!？\?…‥・：ｗ（）\s';
+	#my $seps_woparen = '。．、，！!？\?…‥・：ｗ（）\s';
+	my $seps_woparen = '。．、，！!？\?…‥・：ｗ\s';
 	my $seps = $seps_woparen . '「」『』';
 
 	my $cadds = 'とりあえず|(?:ほんと|ホント|本当)に?|(?:マジ|まじ)で?|だったら';
@@ -92,7 +93,7 @@ sub analyze
 			|
 			  # ○○は爆発しろ
 			  # ○○は～爆発しろ (～は2文字以上)
-			  は(?!じめ)、?(?:[^(?:$seps)]+?[^(?:$seps)はがのをに])?
+			  は(?!じめ)(?!.+?）)、?(?:[^(?:$seps)]+?[^(?:$seps)はがのをに])?
 		    )
 		  )?
 		  # 補足2
@@ -187,8 +188,8 @@ sub analyze
 			return undef;
 		}
 
-		# 文末の単語が名詞になるまで
-		while($#sentence >= 0 && $sentence[0]->{feature} !~ /^名詞/)
+		# 文末の単語が名詞または記号になるまで
+		while($#sentence >= 0 && $sentence[0]->{feature} !~ /^(名詞|記号)/)
 		{
 			shift(@sentence);
 		}
