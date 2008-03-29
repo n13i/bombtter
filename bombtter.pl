@@ -47,7 +47,8 @@ if($mode eq 'auto')
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		localtime(time);
 	print $min . "\n";
-	if(($min+10) % ($conf->{automode_fetchinterval} || 20) == 0)
+	#if(($min+10) % ($conf->{automode_fetchinterval} || 20) == 0)
+	if($min % ($conf->{automode_fetchinterval} || 20) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 0;      # search only
@@ -363,7 +364,7 @@ sub bombtter_publisher
 			#$result = 'は爆発しませんでした。';
 		}
 
-		if($target =~ /^\@$conf->{'twitter_username'}\s*/)
+		if($target =~ /^\@?$conf->{'twitter_username'}\s*/)
 		{
 			# 身代わりに何か適当なものを爆発させる
 			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
