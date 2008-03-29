@@ -228,19 +228,24 @@ sub fetch_followers
 
 	my $target_str = '爆発しろ';
 
+	my $r_statuses = [];
+	my $earliest_status_id = 99999999999;
+
 	my $twit = Net::Twitter->new(username => $username, password => $password);
+
 	my $followers = $twit->followers();
-	#use YAML;
-	#my $followers = YAML::LoadFile('test/followers.yaml');
-	#utf8::decode($followers);
 	if(!defined($followers))
 	{
 		print "can't get followers\n";
 		return undef;
 	}
 
-	my $r_statuses = [];
-	my $earliest_status_id = 99999999999;
+	my $replies = $twit->replies();
+	if(!defined($replies))
+	{
+		print "can't get replies\n";
+		return undef;
+	}
 
 	foreach(@$followers)
 	{
@@ -261,13 +266,7 @@ sub fetch_followers
 		my $permalink   = 'http://twitter.com/' . $_->{screen_name} . '/statuses/' . $status_id;
 		my $status_text = $_->{status}->{text};
 
-		#$status_text = decode('utf8', $status_text);
-		#$status_text = Dump($status_text);
-		#use JSON::Any;
-		#$status_text = JSON::Any->decode($status_text);
-		#$status_text = &_normalize_status_text($status_text);
-
-		#print $status_text . "\n";
+		$status_text = &_normalize_status_text($status_text);
 
 		push(@$r_statuses, {
 			'status_id'   => $status_id,
@@ -276,10 +275,43 @@ sub fetch_followers
 			'screen_name' => $screen_name,
 			'status_text' => $status_text,
 		});
+	}
 
-		if($_->{status}->{id} < $earliest_status_id)
+	foreach(@$replies)
+	{
+		if($_->{user}->{protected})
 		{
-			$earliest_status_id = $_->{status}->{id};
+			print $_->{user}->{screen_name} . " is protected; skip.\n";
+			next;
+		}
+
+		if($_->{text} !~ /$target_str/)
+		{
+			next;
+		}
+
+		my $status_id   = $_->{id};
+		my $screen_name = '@' . $_->{user}->{screen_name};
+		my $name        = $_->{user}->{name};
+		my $permalink   = 'http://twitter.com/' . $_->{user}->{screen_name} . '/statuses/' . $status_id;
+		my $status_text = $_->{text};
+
+		$status_text = &_normalize_status_text($status_text);
+
+		push(@$r_statuses, {
+			'status_id'   => $status_id,
+			'permalink'   => $permalink,
+			'name'        => $name,
+			'screen_name' => $screen_name,
+			'status_text' => $status_text,
+		});
+	}
+
+	foreach(@$r_statuses)
+	{
+		if($_->{status_id} < $earliest_status_id)
+		{
+			$earliest_status_id = $_->{status_id};
 		}
 	}
 

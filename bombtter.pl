@@ -359,6 +359,11 @@ sub bombtter_publisher
 
 		my $result = 'が' . $extra . '爆発しました。';
 
+		if($target eq 'リア充' && $count > 1)
+		{
+			$result .= ' (' . $count . '回目)';
+		}
+
 		if(int(rand(100)) < 5)
 		{
 			#$result = 'は爆発しませんでした。';
