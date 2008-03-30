@@ -342,35 +342,53 @@ sub bombtter_publisher
 		my $count = $update->{count} || 0;
 
 		# post 内容の構築
-		my $result = 'が爆発しました。';
 
+		my $result;
+
+		# ターゲットチェック
 		if($target eq 'リア充' && $count > 1)
 		{
+			# けまらしい
 			$result .= '(' . $count . '回目)';
 		}
-
-		if($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
+		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
 		{
-			# 身代わりに何か適当なものを爆発させる
-			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
-			my $subst = $hashref->{'target'};
+			# 自爆
 
-			if(!defined($subst))
-			{
-				logger('publisher', "WARNING: subst is undef");
-			}
-
-			#if(int(rand(100)) < 70 || !defined($subst))
-			#{
+#			# 身代わりに何か適当なものを爆発させる
+#			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
+#			my $subst = $hashref->{'target'};
+#
+#			if(!defined($subst))
+#			{
+#				logger('publisher', "WARNING: subst is undef");
+#			}
+#
+#			if(int(rand(100)) < 70 || !defined($subst))
+#			{
 				$result = 'が自爆しました。';
-			#}
-			#else
-			#{
-			#	$result = 'の身代わりとして' . $subst . 'が爆発しました。';
-			#}
+#			}
+#			else
+#			{
+#				$result = 'の身代わりとして' . $subst . 'が爆発しました。';
+#			}
+		}
+		else
+		{
+			$result = 'が爆発しました。';
 		}
 
-		my $post = $target . $result;
+		my $post;
+		if($target =~ /イー・?モバイル|いー・?もばいる|自販機|自動販売機/)
+		{
+			# 自重すべきもの
+			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
+				  . $target . 'は爆発しませんでした。';
+		}
+		else
+		{
+			$post = $target . $result;
+		}
 
 		# april mode check
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =

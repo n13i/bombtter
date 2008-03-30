@@ -49,9 +49,6 @@ sub analyze
 
 	# 英単語前後の空白を正規化
     # ex) 誤変換する IME 爆発しろ
-	# FIXME 英単語間の空白の扱い
-	#$target =~ s/([^$ascii])\s([$ascii]+)\s/$1$2/g;
-	#$target =~ s/^([^\@][$ascii]+)\s([^$ascii])/$1$2/g;
 	my $target_name = '';
 	if($target =~ /^(\@[$ascii]+\s*)(.+)$/)
 	{
@@ -60,9 +57,9 @@ sub analyze
 	}
 	$target =~ s/([^$ascii])\s([$ascii]+)/$1$2/g;
 	$target =~ s/([$ascii])\s([^$ascii]+)/$1$2/g;
-	#$target =~ s/^(\@[$ascii]+)\s?/$1 /g;
 	$target = $target_name . $target;
 
+	# @name
 	my $name = '\x{0000}-\x{001f}\x{0021}-\x{007e}';
 
 	# 適当に解析
@@ -136,6 +133,7 @@ sub analyze
 			return undef;
 		}
 
+		# TODO 品詞でチェックしたい
 		if($outro =~ m{^(
 				は|な(?!のよ)|とか|とは|っは|って|よ[^$seps]|
 				で[^す]|と(思|おも)(う|っ)|と(言|いう|いえ)|
@@ -205,14 +203,12 @@ sub analyze
 		}
 
 		# 表層形のみの配列を作る
-		my @out = ();
-		foreach(@sentence)
-		{
-			push(@out, $_->{surface});
-		}
-
 		# スカラーに戻す
-		$object = join('', reverse(@out));
+		$object = '';
+		foreach(reverse(@sentence))
+		{
+			$object .= $_->{surface};
+		}
 
 		# %%SPC%% を半角スペースに戻す
 		$object =~ s/%%SPC%%/ /g;
@@ -222,6 +218,15 @@ sub analyze
 
 		# 戻した結果が @hoge something なら something だけにする
 		$object =~ s/^(?:\@[$name]+\s+)+(.+)$/$1/;
+
+
+		# 最後に長さをチェック
+		if(length($object) > 80)
+		{
+			print "  skipped (due to length '$object'): $target\n";
+			return undef;
+		}
+
 
 		print "  got [$object]: $target\n";
 		return $object;
