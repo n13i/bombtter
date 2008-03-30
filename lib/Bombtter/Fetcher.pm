@@ -332,6 +332,7 @@ sub fetch_followers
 		print "can't get replies\n";
 		return undef;
 	}
+	print $username . ' has ' . ($#$followers+1) . " followers\n";
 
 	foreach(@$followers)
 	{

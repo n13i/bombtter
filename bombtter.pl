@@ -349,7 +349,7 @@ sub bombtter_publisher
 			$result .= '(' . $count . '回目)';
 		}
 
-		if($target =~ /^\@?$conf->{twitter_username}\s*/)
+		if($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
 		{
 			# 身代わりに何か適当なものを爆発させる
 			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
@@ -375,9 +375,8 @@ sub bombtter_publisher
 		# april mode check
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 			localtime(time);
-		if($target !~ /^\@?$conf->{twitter_username}\s*/
-		   && $mon+1 == 4 && $mday == 1
-		)
+		if($target !~ /^.{0,3}?\@?$conf->{twitter_username}\s*/ &&
+		   (($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool}))
 		{
 			my @tpls = (
 				'今、%sが静かなブーム！',
