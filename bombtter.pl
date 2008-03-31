@@ -394,21 +394,13 @@ sub bombtter_publisher
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 			localtime(time);
 		if($target !~ /^.{0,3}?\@?$conf->{twitter_username}\s*/ &&
-		   (($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool}))
+		   (($mon+1 == 4 && $mday == 1 && $hour < 12) || $conf->{debug_aprilfool}))
 		{
 			my @tpls = (
-#				'今、%sが静かなブーム。',
-#				'%sが流行の兆しを見せています。',
-#				'「マイブームは%s」と答える女性が増えています。',
-#				'会場はカリスマ%sを一目見ようと集まった人で溢れています。',
-#				'%sの勢いは留まるところを知りません。',
-#				'今、日本は空前の%sブーム。',
-#				'%sの映画化が決定しました。',
 				'爆発的な人気を誇る、%s。',
 			);
 
 			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
-			#$post = sprintf($tpls[int($hour/3)], $target);
 		}
 
 		# reply してしまわないように
