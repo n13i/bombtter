@@ -404,7 +404,7 @@ sub bombtter_publisher
 #				'%sの勢いは留まるところを知りません。',
 #				'今、日本は空前の%sブーム。',
 #				'%sの映画化が決定しました。',
-				'爆発的な人気を誇る%s。',
+				'爆発的な人気を誇る、%s。',
 			);
 
 			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
