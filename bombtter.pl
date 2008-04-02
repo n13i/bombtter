@@ -349,7 +349,7 @@ sub bombtter_publisher
 		if($target eq 'リア充' && $count > 1)
 		{
 			# けまらしい
-			$result .= '(' . $count . '回目)';
+			$result .= 'が爆発しました。(' . $count . '回目)';
 		}
 		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
 		{
