@@ -305,6 +305,7 @@ sub bombtter_publisher
 	my $enable_posting = $conf->{'enable_posting'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
+
 	my $sql;
 
 	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
@@ -316,6 +317,16 @@ sub bombtter_publisher
 	my $n_unposted = $hashref->{'count'};
 	logger('publisher', "bombs in queue: $n_unposted");
 
+	# post queue の数を見て limit を調節する
+	if($n_unposted >= 7)
+	{
+		$limit = 3;
+	}
+	elsif($n_posted >= 4)
+	{
+		$limit = 2;
+	}
+ 
 	my @posts = ();
 	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
 	$sql =
@@ -349,7 +360,8 @@ sub bombtter_publisher
 		if($target eq 'リア充' && $count > 1)
 		{
 			# けまらしい
-			$result .= 'が爆発しました。(' . $count . '回目)';
+			#$result .= 'が爆発しました。(' . $count . '回目)';
+			$result .= 'が爆発しました。';
 		}
 		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
 		{
@@ -409,7 +421,7 @@ sub bombtter_publisher
 			$post = '. ' . $post;
 		}
 
-		push(@posts, { 'id' => $status_id, 'post' => $post });
+		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post });
 	}
 	$sth->finish;
 
@@ -425,6 +437,24 @@ sub bombtter_publisher
 	foreach(@posts)
 	{
 		my $post = $_->{'post'};
+		my $target = $_->{'target'};
+
+		my $sql =
+			'SELECT COUNT(*) AS count FROM bombs' .
+			'  WHERE target = ?' .
+			'    AND posted_at IS NOT NULL' .  # post されたものから数える
+			'  GROUP BY target';
+		my $sth_count = $dbh->prepare($sql);
+
+		$sth_count->execute($target);
+		if(my $ary = $sth_count->fetchrow_hashref)
+		{
+			my $count = $ary->{count}+1;
+			if($target eq 'リア充' && $count > 1)
+			{
+				$post .= '(' . $count . '回目)';
+			}
+		}
 
 		logger('publisher', "post: $post");
 
