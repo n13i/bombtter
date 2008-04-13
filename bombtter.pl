@@ -322,7 +322,7 @@ sub bombtter_publisher
 	{
 		$limit = 3;
 	}
-	elsif($n_posted >= 4)
+	elsif($n_unposted >= 4)
 	{
 		$limit = 2;
 	}
