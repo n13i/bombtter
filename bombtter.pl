@@ -320,7 +320,7 @@ sub bombtter_publisher
 	# post queue の数を見て limit を調節する
 	if($n_unposted >= 7)
 	{
-		$limit = 3;
+		$limit = 2;
 	}
 	elsif($n_unposted >= 4)
 	{
@@ -363,7 +363,7 @@ sub bombtter_publisher
 			#$result .= 'が爆発しました。(' . $count . '回目)';
 			$result .= 'が爆発しました。';
 		}
-		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*/)
+		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*$/)
 		{
 			# 自爆
 
