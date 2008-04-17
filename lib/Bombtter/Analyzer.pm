@@ -20,7 +20,8 @@ $revision = '$Rev$';
 use MeCab;
 use Encode;
 
-my $mecab_dic_encoding = 'euc-jp';
+#my $mecab_dic_encoding = 'euc-jp';
+my $mecab_dic_encoding = 'utf8';
 
 sub analyze
 {
@@ -160,7 +161,7 @@ sub analyze
 		$object =~ s/\s/%%SPC%%/g;
 
 		# 対 WAVE DASH 問題
-		$object =~ s/\x{ff5e}/\x{301c}/g;
+		#$object =~ s/\x{ff5e}/\x{301c}/g;
 
 		# 形態素解析テスト
 		# 表層形と品詞を文末の単語から順に @sentence へ
