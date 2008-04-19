@@ -139,7 +139,10 @@ sub _parse_rss
 				$name = $2;
 				$status_text = $3;
 				$status_id = $4;
-				$permalink = 'http://twitter.com/' . $screen_name . '/statuses/' . $status_id;
+
+				my $screen_name_noat = $screen_name;
+				$screen_name_noat =~ s/^\@//;
+				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
 

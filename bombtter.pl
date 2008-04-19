@@ -228,6 +228,7 @@ sub bombtter_analyzer
 
 	my @analyze_ok_ids = ();
 	my @analyze_ng_ids = ();
+	my @analyze_nobomb_ids = ();
 
 	my $mecab_opts = '';
 	if(defined($conf->{'mecab_userdic'}))
@@ -246,6 +247,14 @@ sub bombtter_analyzer
 		my $source = $update->{'source'};
 
 		logger('analyzer', "target: " . $target);
+
+		# 爆発させないフラグ
+		if($target =~ /爆発しろ.+-b/i)
+		{
+			push(@analyze_nobomb_ids, $status_id);
+			logger('analyzer', "result: has no-bomb flag");
+			next;
+		}
 
 		my $bombed = analyze($target, $mecab_opts);
 
@@ -282,6 +291,10 @@ sub bombtter_analyzer
 	foreach(@analyze_ng_ids)
 	{
 		$sth->execute(0, $_);
+	}
+	foreach(@analyze_nobomb_ids)
+	{
+		$sth->execute(-1, $_);
 	}
 	$dbh->commit;
 	$sth->finish;
