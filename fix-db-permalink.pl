@@ -24,8 +24,11 @@ while(my $update = $sth->fetchrow_hashref)
 
 	#print $permalink . "\n";
 
-    $permalink =~ s/(com\/)\@/$1/;
-    push(@updates, { status_id => $status_id, permalink => $permalink });
+    if($permalink =~ /com\/\@/)
+    {
+        $permalink =~ s/(com\/)\@/$1/;
+        push(@updates, { status_id => $status_id, permalink => $permalink });
+    }
 }
 $sth->finish;
 
