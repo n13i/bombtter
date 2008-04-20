@@ -20,7 +20,7 @@
       <ul>
         <li><a href="/">HOME</a></li>
         <li>/ <a href="/bombtter/">bombtter</a></li>
-        <li>/ <a href="/bombter/bombcloud/">bombcloud</a></li>
+        <li>/ <a href="/bombtter/bombcloud/">bombcloud</a></li>
       </ul>
     </div>
   </div>
