@@ -13,11 +13,16 @@
 <body>
 
   <div id="navi">
-    <ul>
-      <li><a href="/">HOME</a></li>
-      <li>/ <a href="/bombtter/">bombtter</a></li>
-      <li>/ <a href="/bombter/bombcloud/">bombcloud</a></li>
-    </ul>
+    <div id="navi-inner">
+      <div id="sitelogo">
+        labs.m2hq.net
+      </div>
+      <ul>
+        <li><a href="/">HOME</a></li>
+        <li>/ <a href="/bombtter/">bombtter</a></li>
+        <li>/ <a href="/bombter/bombcloud/">bombcloud</a></li>
+      </ul>
+    </div>
   </div>
  
   <div id="contents">
