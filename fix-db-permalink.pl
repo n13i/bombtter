@@ -32,7 +32,7 @@ while(my $update = $sth->fetchrow_hashref)
 }
 $sth->finish;
 
-my $sth = $dbh->prepare('UPDATE statuses SET permalink = ? WHERE status_id = ?');
+$sth = $dbh->prepare('UPDATE statuses SET permalink = ? WHERE status_id = ?');
 foreach(@updates)
 {
     print $_->{permalink} . "\n";
