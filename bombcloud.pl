@@ -106,7 +106,7 @@ print FH <<EOM;
     </div>
     <h1>bombcloud</h1>
     <p>
-      $thresh 回以上爆発したものを表示しています。
+      $thresh 回以上爆発したものを表示しています。(約 1 時間毎に更新)
     </p>
     <div class="entry">
 EOM
