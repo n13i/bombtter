@@ -22,6 +22,7 @@ use Encode;
 use Web::Scraper;
 use URI;
 use Net::Twitter;
+use Net::Twitter::Diff;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -320,9 +321,11 @@ sub fetch_followers
 	my $r_statuses = [];
 	my $earliest_status_id = 99999999999;
 
-	my $twit = Net::Twitter->new(username => $username, password => $password);
+	#my $twit = Net::Twitter->new(username => $username, password => $password);
+	my $twit = Net::Twitter::Diff->new(username => $username, password => $password);
 
-	my $followers = $twit->followers();
+	#my $followers = $twit->followers();
+	my $followers = $twit->xfollowers();
 	if(!defined($followers))
 	{
 		print "can't get followers\n";
