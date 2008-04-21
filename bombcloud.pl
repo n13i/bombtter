@@ -37,15 +37,16 @@ while(my $update = $sth->fetchrow_hashref)
     print "$target ($count)\n";
 
     my $target_enc = $target;
+    $target_enc =~ tr/A-Z/a-z/;
 #    $target_enc =~ s/([^0-9A-Za-z_ ])/'%'.unpack('H2',$1)/ge;
 #    $target_enc =~ s/\s/+/g;
     #$target_enc = encode_base64(encode('utf8', $target));
     $target_enc = md5_base64(encode('utf8', $target));
     $target_enc =~ s/\n//g;
-    $target_enc =~ tr/\+\/=/\._\-/;
+    $target_enc =~ tr/\+\/=/_\-=/;
 
 	#print $count . "\t\t" . $target . "\n";
-    my $filename = $target_enc . '.php';
+    my $filename = '0' . $target_enc . '.php';
 
     $cloud->add($target, 'details/' . $filename, $count);
 
