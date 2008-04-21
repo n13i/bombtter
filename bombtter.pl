@@ -49,13 +49,13 @@ if($mode eq 'auto')
 		localtime(time);
 	print $min . "\n";
 	#if(($min+10) % ($conf->{automode_fetchinterval} || 20) == 0)
-	if($min % ($conf->{automode_fetchinterval} || 20) == 0)
+	if($min % ($conf->{automode_search_interval} || 20) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 0;      # search only
 		$post_source   = -1;     # search + followers
 	}
-	elsif($min % ($conf->{automode_postinterval} || 10) == 0)
+	elsif($min % ($conf->{automode_api_interval} || 10) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 1;      # followers only
@@ -63,9 +63,9 @@ if($mode eq 'auto')
 	}
 	else
 	{
-		$mode          = 'both';
-		$scrape_source = 1;      # followers only
-		$post_source   = 1;      # followers only
+		$mode          = 'post';
+		#$scrape_source = 1;      # followers only
+		$post_source   = -1;     # search + followers
 	}
 }
 
