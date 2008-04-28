@@ -463,7 +463,8 @@ sub bombtter_publisher
 		if(my $ary = $sth_count->fetchrow_hashref)
 		{
 			my $count = $ary->{count}+1;
-			if($target eq 'リア充' && $count > 1)
+			#if($target eq 'リア充' && $count > 1)
+			if($target =~ /充$/ && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
 			}
