@@ -34,23 +34,30 @@
       <?=$bombcount?> 回爆発しています。
     </p>
     <div class="entry">
-      <ul class="bombcloud">
+      <ol class="bombcloud">
 <?php
+$n = $bombcount;
 foreach($list as $item)
 {
     $screen_name = str_replace('@', '', $item['screen_name']);
     $url_profile = 'http://twitter.com/' . $screen_name;
     $status_text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $item['status_text']);
     $status_text = html_entity_decode($status_text);
+    $username = $item['name'];
+    if($username != $screen_name)
+    {
+        $username = $screen_name . ' / ' . $username;
+    }
 
-    print '<li><a href="' . $item['permalink'] . '">■</a> <span class="status">' . $status_text . '</span><br />';
-    print '<div style="text-align:right">';
-    print 'by <a href="' . $url_profile . '">' . $screen_name . ' / ' . $item['name'] . '</a>, ' . strftime('%Y/%m/%d %H:%M:%S %z', strtotime($item['posted_at']) + 9 * 3600);
+    print '<li value="' . $n . '"><span class="status">' . $status_text . '</span><br />';
+    print '<div style="text-align:right;font-size:90%">';
+    print '<a href="' . $item['permalink'] . '">Requested</a> by <a href="' . $url_profile . '">' . $username . '</a>, bombed at ' . strftime('%Y/%m/%d %H:%M:%S %z', strtotime($item['posted_at']) + 9 * 3600);
     print '</div>';
     print '</li>';
+    $n--;
 }
 ?>
-      </ul>
+      </ol>
     </div>
   </div>
 
