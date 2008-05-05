@@ -342,6 +342,8 @@ sub fetch_followers
 
 	foreach(@$followers)
 	{
+		last if(ref($_) ne 'HASH');
+
 		if($_->{protected})
 		{
 			print $_->{screen_name} . " is protected; skip.\n";
