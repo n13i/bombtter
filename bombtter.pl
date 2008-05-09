@@ -343,7 +343,7 @@ sub bombtter_publisher
 	my @posts = ();
 	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
 	$sql =
-		'SELECT *, (' .
+		'SELECT rowid, status_id, target, (' .
 		' SELECT COUNT(*) FROM bombs co ' .
 		'  WHERE co.target = li.target' .
 		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
@@ -362,6 +362,7 @@ sub bombtter_publisher
 	while(my $update = $sth->fetchrow_hashref)
 	{
 		my $status_id = $update->{status_id};
+		my $rowid = $update->{rowid};
 		my $target = $update->{target};
 		my $count = $update->{count} || 0;
 
@@ -434,7 +435,7 @@ sub bombtter_publisher
 			$post = '. ' . $post;
 		}
 
-		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post });
+		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid });
 	}
 	$sth->finish;
 
@@ -451,6 +452,7 @@ sub bombtter_publisher
 	{
 		my $post = $_->{'post'};
 		my $target = $_->{'target'};
+		my $rowid = $_->{'rowid'};
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
@@ -468,6 +470,12 @@ sub bombtter_publisher
 			{
 				$post .= '(' . $count . '回目)';
 			}
+		}
+
+		# 連投対策
+		if($rowid % 2 == 1)
+		{
+			$post .= '　'; # 全角スペース
 		}
 
 		logger('publisher', "post: $post");
