@@ -28,11 +28,16 @@ sub analyze
 	my $target = shift || return undef;
 	my $mecab_opts = shift || '';
 
+	my $kyubotter_requested_by = undef;
+
 	# @kyubotter 対策(1)
-	if($target =~ /が世界に&quot;(.+?爆発しろ.*)/)
+	# 「@someoneが世界に"○○爆発しろ"を、要求しています。」
+	# ただ「爆発しろ」の場合はスルー
+	if($target =~ /^(.+?)が世界に&quot;(.+?爆発しろ.*)/)
 	{
-		$target = $1;
-		print "  vs. \@kyubotter: replacing target with $target\n";
+		$kyubotter_requested_by = $1;
+		$target = $2;
+		print "  vs. \@kyubotter: replacing target with ($target), requested by ($kyubotter_requested_by)\n";
 	}
 
 #	my $seps = '。|．|\.\s|、|，|,\s|！|!|？|\?|…|･･|・|：|ｗ+|（|）|「|『|」|』|\s';
@@ -240,6 +245,10 @@ sub analyze
 		if($object =~ /(\@[$name]+)が世界に&quot;$/)
 		{
 			$object = $1 . ' によって世界';
+		}
+		if(defined($kyubotter_requested_by))
+		{
+			$object = $kyubotter_requested_by . ' によって' . $object;
 		}
 
 		# 最後に長さをチェック
