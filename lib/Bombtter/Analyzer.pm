@@ -244,11 +244,11 @@ sub analyze
 		# @kyubotter 対策(3)
 		if($object =~ /(\@[$name]+)が世界に&quot;$/)
 		{
-			$object = $1 . ' によって世界';
+			$object = $1 . ' の要求により、世界';
 		}
 		if(defined($kyubotter_requested_by))
 		{
-			$object = $kyubotter_requested_by . ' によって' . $object;
+			$object = $kyubotter_requested_by . ' の要求により、' . $object;
 		}
 
 		# 最後に長さをチェック
