@@ -28,6 +28,13 @@ sub analyze
 	my $target = shift || return undef;
 	my $mecab_opts = shift || '';
 
+	# @kyubotter 対策(1)
+	if($target =~ /が世界に&quot;(.+?爆発しろ.*)/)
+	{
+		$target = $1;
+		print "  vs. \@kyubotter: replacing target with $target\n";
+	}
+
 #	my $seps = '。|．|\.\s|、|，|,\s|！|!|？|\?|…|･･|・|：|ｗ+|（|）|「|『|」|』|\s';
 	# FIXME スペースを含む英単語が分割されてしまう件
 	#my $seps = '。．、，！!？\?…‥・：ｗ（）「」『』\s';
@@ -129,7 +136,7 @@ sub analyze
 			#[てで]$|      # FIXME 文末の品詞を調べるべき
 			←$|
 			・$|
-			^【急募】$|
+			^【急募】|    # @kyubotter 対策(2)
 			^(?:$cadds)$
 			}x)
 		{
@@ -228,6 +235,12 @@ sub analyze
 
 		# WAVE DASH を元に戻す
 		#$object =~ s/\x{301c}/\x{ff5e}/g;
+
+		# @kyubotter 対策(3)
+		if($object =~ /(\@[$name]+)が世界に&quot;$/)
+		{
+			$object = $1 . ' によって世界';
+		}
 
 		# 最後に長さをチェック
 		if(length($object) > 80)
