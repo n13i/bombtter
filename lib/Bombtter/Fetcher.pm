@@ -430,7 +430,7 @@ sub fetch_followers
 
 	my $sth = $dbh->prepare(
 		'SELECT status_id, permalink, name, screen_name, status_text ' .
-		'FROM statuses ORDER BY status_id ASC LIMIT ?');
+		'FROM statuses ORDER BY status_id DESC LIMIT ?');
 	$sth->execute(30);
 	while(my $status = $sth->fetchrow_hashref)
 	{
