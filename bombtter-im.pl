@@ -146,6 +146,8 @@ sub recv_message
     return if(!defined($tree->{message}->{entry}));
 
     my $status_text = $tree->{message}->{body};
+    &debug('<< [%s]', $status_text);
+
     $status_text =~ s/^[^:]+\:\s+//;
 
     return if($status_text !~ /爆発しろ/);
