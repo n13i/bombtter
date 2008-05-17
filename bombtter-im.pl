@@ -203,13 +203,17 @@ sub autofollow
 
     my $diff = $twitter->diff();
 
+    my $n = 0;
     foreach(@{$diff->{not_following}})
     {
+        last if($n > 100);
+        $n++;
+
         &debug('start following %s', $_);
         &send_message('on ' . $_);
     }
 
-    my $n = 0;
+    $n = 0;
     foreach(@{$diff->{not_followed}})
     {
         last if($n > 10); # API 制限対策
