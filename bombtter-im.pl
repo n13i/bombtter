@@ -96,7 +96,7 @@ sub main
 
     #&send_message('whois n13i');
 
-    while(defined($jabber->Process(1)))
+    while(defined($jabber->Process(5)))
     {
         return 0 if(!$mainloop);
 
