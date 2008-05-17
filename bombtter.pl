@@ -373,7 +373,7 @@ sub bombtter_publisher
 			#$result .= 'が爆発しました。(' . $count . '回目)';
 			$result .= 'が爆発しました。';
 		}
-		elsif($target =~ /^.{0,3}?\@?$myid\s*$/)
+		elsif($target =~ /^.*?\@?$myid\s*$/)
 		{
 			# 自爆
 
