@@ -365,6 +365,7 @@ sub bombtter_publisher
 
 		my $result;
 
+		my $myid = $conf->{twitter}->{username};
 		# ターゲットチェック
 		if($target eq 'リア充' && $count > 1)
 		{
@@ -372,7 +373,7 @@ sub bombtter_publisher
 			#$result .= 'が爆発しました。(' . $count . '回目)';
 			$result .= 'が爆発しました。';
 		}
-		elsif($target =~ /^.{0,3}?\@?$conf->{twitter}->{username}\s*$/)
+		elsif($target =~ /^.{0,3}?\@?$myid\s*$/)
 		{
 			# 自爆
 
@@ -414,7 +415,7 @@ sub bombtter_publisher
 		# april mode check
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 			localtime(time);
-		if($target !~ /^.{0,3}?\@?$conf->{twitter}->{username}\s*/ &&
+		if($target !~ /^.{0,3}?\@?$myid\s*/ &&
 		   (($mon+1 == 4 && $mday == 1 && $hour < 12) || $conf->{debug_aprilfool}))
 		{
 			my @tpls = (
