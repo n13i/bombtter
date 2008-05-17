@@ -140,7 +140,7 @@ sub recv_message
 
     return if($from ne $TWITTER_JID);
 
-    print Dump($message);
+    #print Dump($message);
 
     my $tpp = XML::TreePP->new;
     my $tree = $tpp->parse($message->GetXML);
