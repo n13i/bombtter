@@ -130,9 +130,9 @@ sub recv_message
     my $message = shift;
 
     my $type = $message->GetType;
-    &debug('type = %s', $type);
+    #&debug('type = %s', $type);
     my $from = $message->GetFrom;
-    &debug('from = %s', $from);
+    #&debug('from = %s', $from);
     #my $body = $message->GetBody;
     #&debug('body = %s', $body);
 
