@@ -313,7 +313,7 @@ sub _scrape_html_web_scraper
 	};
 }
 
-sub fetch_followers
+sub _fetch_followers_api
 {
 	my $username = shift || return undef;
 	my $password = shift || return undef;
@@ -407,6 +407,37 @@ sub fetch_followers
 		if($_->{status_id} < $earliest_status_id)
 		{
 			$earliest_status_id = $_->{status_id};
+		}
+	}
+
+	return {
+		'earliest_status_id' => $earliest_status_id,
+		'statuses' => $r_statuses,
+	};
+}
+
+sub fetch_followers
+{
+	my $dbfile = shift || return undef;
+	my $timeout = shift || 5000;
+
+	my $r_statuses = [];
+	my $earliest_status_id = 99999999999;
+
+	my $dbh = DBI->connect(
+		'dbi:SQLite:dbname=' . $dbfile, '', '', {unicode => 1});
+	$dbh->func($timeout, 'busy_timeout');
+
+	my $sth = $dbh->prepare(
+		'SELECT status_id, permalink, name, screen_name, status_text ' .
+		'FROM statuses ORDER BY status_id ASC LIMIT ?');
+	$sth->execute(30);
+	while(my $status = $sth->fetchrow_hashref)
+	{
+		push(@$r_statuses, $status);
+		if($status->{status_id} < $earliest_status_id)
+		{
+			$earliest_status_id = $status->{status_id};
 		}
 	}
 

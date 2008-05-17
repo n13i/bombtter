@@ -48,14 +48,13 @@ if($mode eq 'auto')
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		localtime(time);
 	print $min . "\n";
-	#if(($min+10) % ($conf->{automode_fetchinterval} || 20) == 0)
 	if($min % ($conf->{automode_search_interval} || 20) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 0;      # search only
 		$post_source   = -1;     # search + followers
 	}
-	elsif($min % ($conf->{automode_api_interval} || 10) == 0)
+	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
 	{
 		$mode          = 'both';
 		$scrape_source = 1;      # followers only
@@ -64,8 +63,7 @@ if($mode eq 'auto')
 	else
 	{
 		$mode          = 'post';
-		#$scrape_source = 1;      # followers only
-		$post_source   = -1;     # search + followers
+		$post_source   = 1;     # followers only
 	}
 }
 
@@ -112,7 +110,7 @@ sub bombtter_scraper
 	logger('scraper', 'running scraper ' . $Bombtter::Fetcher::revision);
 	logger('scraper', 'source: ' . $source_name[$source]);
 
-	my $ignore_name = $conf->{'twitter_username'};
+	my $ignore_name = $conf->{twitter}->{username};
 	logger('scraper', "ignore: $ignore_name");
 
 	$dbh->do('CREATE TABLE statuses (status_id INTEGER UNIQUE, permalink TEXT, screen_name TEXT, name TEXT, status_text TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, analyzed INTEGER)');
@@ -155,8 +153,9 @@ sub bombtter_scraper
 		}
 		elsif($source == 1)
 		{
-			$r = fetch_followers($conf->{'twitter_username'},
-								 $conf->{'twitter_password'});
+			#$r = fetch_followers($conf->{twitter}->{username},
+			#					 $conf->{twitter}->{password});
+			$r = fetch_followers($conf->{db}->{im});
 			&error if(!defined($r));
 
 			# 強制的にリモートの最古 < ローカルの最新になるようにする
@@ -335,10 +334,6 @@ sub bombtter_publisher
 	{
 		$limit = 2;
 	}
-	elsif($n_unposted >= 4)
-	{
-		$limit = 2;
-	}
  
 	my @posts = ();
 	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
@@ -377,7 +372,7 @@ sub bombtter_publisher
 			#$result .= 'が爆発しました。(' . $count . '回目)';
 			$result .= 'が爆発しました。';
 		}
-		elsif($target =~ /^.{0,3}?\@?$conf->{twitter_username}\s*$/)
+		elsif($target =~ /^.{0,3}?\@?$conf->{twitter}->{username}\s*$/)
 		{
 			# 自爆
 
@@ -419,7 +414,7 @@ sub bombtter_publisher
 		# april mode check
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 			localtime(time);
-		if($target !~ /^.{0,3}?\@?$conf->{twitter_username}\s*/ &&
+		if($target !~ /^.{0,3}?\@?$conf->{twitter}->{username}\s*/ &&
 		   (($mon+1 == 4 && $mday == 1 && $hour < 12) || $conf->{debug_aprilfool}))
 		{
 			my @tpls = (
@@ -442,8 +437,8 @@ sub bombtter_publisher
 
 
 	my $twit = Net::Twitter->new(
-			username => $conf->{'twitter_username'},
-			password => $conf->{'twitter_password'});
+			username => $conf->{twitter}->{username},
+			password => $conf->{twitter}->{password});
 
 	$sth = $dbh->prepare(
 			'UPDATE bombs SET posted_at = CURRENT_TIMESTAMP WHERE status_id = ?');
