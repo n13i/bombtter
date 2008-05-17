@@ -133,19 +133,22 @@ sub recv_message
     &debug('type = %s', $type);
     my $from = $message->GetFrom;
     &debug('from = %s', $from);
-    my $body = $message->GetBody;
-    &debug('body = %s', $body);
+    #my $body = $message->GetBody;
+    #&debug('body = %s', $body);
 
-    &debug('<< from %s, type %s : [%s]', $from, $type, $body);
+    &debug('<< from %s, type %s', $from, $type);
 
     return if($from ne $TWITTER_JID);
-
-    return if($body !~ /爆発しろ/);
 
     my $tpp = XML::TreePP->new;
     my $tree = $tpp->parse($message->GetXML);
 
     return if(!defined($tree->{message}->{entry}));
+
+    my $status_text = $tree->{message}->{body};
+    $status_text =~ s/^[^:]+\:\s+//;
+
+    return if($status_text !~ /爆発しろ/);
 
     my $screen_name = $tree->{message}->{entry}->{source}->{author}->{screen_name};
     if($tree->{message}->{entry}->{source}->{author}->{protected} eq 'true')
@@ -153,9 +156,6 @@ sub recv_message
         &debug('%s is protected, skip.', $screen_name);
         return;
     }
-
-    my $status_text = $tree->{message}->{body};
-    $status_text =~ s/^[^:]+\:\s+//;
 
     my $status_id = $tree->{message}->{entry}->{status_id};
     if(!defined($status_id))
