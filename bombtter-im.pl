@@ -206,27 +206,30 @@ sub autofollow
 {
     &debug('Performing auto follow/remove process ...');
 
-    my $diff = $twitter->diff();
-
-    my $n = 0;
-    foreach(@{$diff->{not_following}})
-    {
-        last if($n > 100);
-        $n++;
-
-        &debug('start following %s', $_);
-        &send_message('on ' . $_);
-    }
-
-    $n = 0;
-    foreach(@{$diff->{not_followed}})
-    {
-        last if($n > 10); # API 制限対策
-        $n++;
-
-        &debug('stop following %s', $_);
-        $twitter->stop_following($_);
-    }
+    eval {
+        my $diff = $twitter->diff();
+    
+        my $n = 0;
+        foreach(@{$diff->{not_following}})
+        {
+            last if($n > 100);
+            $n++;
+    
+            &debug('start following %s', $_);
+            &send_message('on ' . $_);
+        }
+    
+        $n = 0;
+        foreach(@{$diff->{not_followed}})
+        {
+            last if($n > 10); # API 制限対策
+            $n++;
+    
+            &debug('stop following %s', $_);
+            $twitter->stop_following($_);
+        }
+    };
+    warn $@ if $@;
 
     &debug('auto follow/remove done.');
 }
