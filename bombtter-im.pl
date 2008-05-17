@@ -124,6 +124,8 @@ sub stop
 # ---------------------------------------------------------------------------
 sub recv_message
 {
+    &debug('recv_message');
+
     my $sid = shift;
     my $message = shift;
 
