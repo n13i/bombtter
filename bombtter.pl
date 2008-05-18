@@ -336,13 +336,15 @@ sub bombtter_publisher
 	}
  
 	my @posts = ();
-	#my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC LIMIT ?');
+#	$sql =
+#		'SELECT rowid, status_id, target, (' .
+#		' SELECT COUNT(*) FROM bombs co ' .
+#		'  WHERE co.target = li.target' .
+#		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
+#		'  GROUP BY co.target) AS count ' .
+#		'FROM bombs li WHERE posted_at IS NULL ';
 	$sql =
-		'SELECT rowid, status_id, target, (' .
-		' SELECT COUNT(*) FROM bombs co ' .
-		'  WHERE co.target = li.target' .
-		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
-		'  GROUP BY co.target) AS count ' .
+		'SELECT rowid, status_id, target ' .
 		'FROM bombs li WHERE posted_at IS NULL ';
 	if($limit_source >= 0)
 	{
@@ -351,15 +353,12 @@ sub bombtter_publisher
 	$sql .= 'ORDER BY status_id ASC LIMIT ?';
 	my $sth = $dbh->prepare($sql);
 
-	# FIXME 複数個を一度に post する場合は count の計算をちゃんとしないとない
-	#       (全部 post した後で posted_at が更新されるため)
 	$sth->execute($limit);
 	while(my $update = $sth->fetchrow_hashref)
 	{
 		my $status_id = $update->{status_id};
 		my $rowid = $update->{rowid};
 		my $target = $update->{target};
-		my $count = $update->{count} || 0;
 
 		# post 内容の構築
 
@@ -367,13 +366,7 @@ sub bombtter_publisher
 
 		my $myid = $conf->{twitter}->{username};
 		# ターゲットチェック
-		if($target eq 'リア充' && $count > 1)
-		{
-			# けまらしい
-			#$result .= 'が爆発しました。(' . $count . '回目)';
-			$result .= 'が爆発しました。';
-		}
-		elsif($target =~ /^.*?\@?$myid\s*$/)
+		if($target =~ /^.*?\@?$myid\s*$/)
 		{
 			# 自爆
 
@@ -461,6 +454,8 @@ sub bombtter_publisher
 		if(my $ary = $sth_count->fetchrow_hashref)
 		{
 			my $count = $ary->{count}+1;
+
+			# けまらしい
 			#if($target eq 'リア充' && $count > 1)
 			if($target =~ /充$/ && $count > 1)
 			{
