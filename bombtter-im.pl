@@ -60,7 +60,6 @@ while($mainloop)
 }
 
 &debug('exit');
-$jabber->Disconnect;
 $dbh->disconnect;
 exit 0;
 # ---------------------------------------------------------------------------
@@ -96,9 +95,15 @@ sub main
 
     #&send_message('whois n13i');
 
+    my $ret = -1;
+
     while(defined($jabber->Process(5)))
     {
-        return 0 if(!$mainloop);
+        if(!$mainloop)
+        {
+            $ret = 0;
+            last;
+        }
 
         if(($conf->{autofollow_interval} || 0) > 0 &&
            time >= $next_autofollow_time)
@@ -106,12 +111,17 @@ sub main
             &autofollow;
             $next_autofollow_time = time + $conf->{autofollow_interval};
         }
-
-        sleep(1);
     }
 
-    &debug('Jabber: Status not ok.');
-    return -1;
+    if($ret == -1)
+    {
+        &debug('Jabber: Status not ok.');
+    }
+
+    $jabber->Disconnect;
+    &debug('Jabber: Disconnected.');
+
+    return $ret;
 }
 
 # ---------------------------------------------------------------------------
