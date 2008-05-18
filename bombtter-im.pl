@@ -47,7 +47,11 @@ my $twitter = Net::Twitter::Diff->new(
         password => $conf->{twitter}->{password},
 );
 
-my $next_autofollow_time = 0;
+my $next_autofollow_time = time + $conf->{autofollow_interval};
+if(($ARGV[0] || '') eq '--do-first-autofollow')
+{
+    $next_autofollow_time = 0;
+}
 
 &debug('starting ...');
 while($mainloop)
