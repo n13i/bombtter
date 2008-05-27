@@ -23,6 +23,7 @@ use Web::Scraper;
 use URI;
 use Net::Twitter;
 use Net::Twitter::Diff;
+use HTML::Entities;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -145,6 +146,8 @@ sub _parse_rss
 				$screen_name_noat =~ s/^\@//;
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
+				# 二重にエンティティ化されているため
+				$status_text = decode_entities($status_text);
 				$status_text = &_normalize_status_text($status_text);
 
 				push(@$r_statuses, {
@@ -450,6 +453,9 @@ sub fetch_followers
 sub _normalize_status_text
 {
 	my $s = shift || '';
+
+	# HTML 文字エンティティのデコード
+	$s = decode_entities($s);
 
 	# @ リンクの除去
 	$s =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
