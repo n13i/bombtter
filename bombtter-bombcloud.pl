@@ -1,8 +1,9 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # 2008/03/18
 # $Id: dump-wordranking.pl 40 2008-03-24 19:54:45Z naoh $
 
+use warnings;
 use strict;
 use utf8;
 
@@ -22,7 +23,9 @@ my $thresh = $ARGV[0] || 1;
 
 my $cloud = HTML::TagCloud->new;
 
-my $dbh = db_connect($conf);
+#my $dbh = db_connect($conf);
+`cp $conf->{db}->{main} $conf->{db}->{bombcloud}`;
+my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{db}->{bombcloud}, '', '', {unicode => 1});
 
 my @posts = ();
 #my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs GROUP BY target HAVING count >= ? ORDER BY count DESC');

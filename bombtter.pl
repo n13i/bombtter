@@ -343,9 +343,12 @@ sub bombtter_publisher
 #		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
 #		'  GROUP BY co.target) AS count ' .
 #		'FROM bombs li WHERE posted_at IS NULL ';
+#	$sql =
+#		'SELECT rowid, status_id, target ' .
+#		'FROM bombs li WHERE posted_at IS NULL ';
 	$sql =
-		'SELECT rowid, status_id, target ' .
-		'FROM bombs li WHERE posted_at IS NULL ';
+		'SELECT rowid, status_id, target, (SELECT s.permalink FROM statuses s WHERE s.status_id = b.status_id) AS permalink ' .
+		'FROM bombs b WHERE posted_at IS NULL ';
 	if($limit_source >= 0)
 	{
 		$sql .= 'AND source = ' . $limit_source . ' ';
@@ -359,6 +362,7 @@ sub bombtter_publisher
 		my $status_id = $update->{status_id};
 		my $rowid = $update->{rowid};
 		my $target = $update->{target};
+		my $permalink = $update->{permalink};
 
 		# post 内容の構築
 
@@ -393,6 +397,7 @@ sub bombtter_publisher
 			$result = 'が爆発しました。';
 		}
 
+		my $bomb_result = 0;
 		my $post;
 		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|自販機|自動販売機|不発弾/)
 		{
@@ -403,6 +408,7 @@ sub bombtter_publisher
 		else
 		{
 			$post = $target . $result;
+			$bomb_result = 1;
 		}
 
 		# april mode check
@@ -424,7 +430,7 @@ sub bombtter_publisher
 			$post = '. ' . $post;
 		}
 
-		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid });
+		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid, 'result' => $bomb_result, 'permalink' => $permalink });
 	}
 	$sth->finish;
 
@@ -442,6 +448,9 @@ sub bombtter_publisher
 		my $post = $_->{'post'};
 		my $target = $_->{'target'};
 		my $rowid = $_->{'rowid'};
+		my $bomb_result = $_->{'result'};
+		my $permalink = $_->{'permalink'};
+		my $count = 1;
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
@@ -453,7 +462,7 @@ sub bombtter_publisher
 		$sth_count->execute($target);
 		if(my $ary = $sth_count->fetchrow_hashref)
 		{
-			my $count = $ary->{count}+1;
+			$count = $ary->{count}+1;
 
 			# けまらしい
 			#if($target eq 'リア充' && $count > 1)
@@ -489,6 +498,12 @@ sub bombtter_publisher
 			{
 				&error('failed to update');
 			}
+
+			my $twit2 = Net::Twitter->new(
+				username => $conf->{twitter_raw}->{username},
+				password => $conf->{twitter_raw}->{password});
+			$status = $twit2->update(encode('utf8',
+				sprintf('%d,%d|%s|%s', $bomb_result, $count, $permalink, $target)));
 		}
 	}
 	$sth->finish;

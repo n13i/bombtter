@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # 2008/03/17
 # $Id$
@@ -21,6 +21,15 @@ if(defined($conf->{'mecab_userdic'}))
 	$mecab_opts .= '--userdic=' . $conf->{'mecab_userdic'};
 }
 
+my $verbose = 0;
+if(($ARGV[0] || '') eq '-v')
+{
+    $verbose = 1;
+    select(STDERR); $| = 1;
+    select(STDOUT);
+}
+
+my $lines = 0;
 #my $prompt = 'input> ';
 #print STDERR $prompt;
 #foreach(<STDIN>) # foreach だと全体を読み込んでからになる
@@ -43,5 +52,12 @@ while(<STDIN>)
 	}
 	print "--------\n";
 
+    if($verbose)
+    {
+        printf STDERR "done %d status(es)\r", $lines;
+    }
+    $lines++;
 	#print STDERR $prompt;
 }
+printf STDERR "\n" if($verbose);
+
