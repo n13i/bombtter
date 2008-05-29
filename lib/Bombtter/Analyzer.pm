@@ -238,6 +238,9 @@ sub analyze
 		# 戻した結果が @hoge something なら something だけにする
 		$object =~ s/^(?:\@[$name]+\s+)+(.+)$/$1/;
 
+		# .@hoge を @hoge に
+		$object =~ s/\.\@([$name]+)/\@$1/;
+
 		# WAVE DASH を元に戻す
 		#$object =~ s/\x{301c}/\x{ff5e}/g;
 
