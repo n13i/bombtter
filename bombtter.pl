@@ -464,9 +464,10 @@ sub bombtter_publisher
 		{
 			$count = $ary->{count}+1;
 
-			# けまらしい
-			#if($target eq 'リア充' && $count > 1)
-			if($target =~ /充$/ && $count > 1)
+			# oo充: けまらしい
+			# skylab13: requested by supistar, 2008/05/29
+			if(($target =~ /充$/ || $target =~ /skylab13/)
+			   && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
 			}

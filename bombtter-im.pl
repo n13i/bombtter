@@ -230,7 +230,7 @@ sub autofollow
         my $n = 0;
         foreach(@{$diff->{not_following}})
         {
-            last if($n > 100);
+            last if($n > 20);
             $n++;
     
             &debug('start following %s', $_);
