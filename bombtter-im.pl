@@ -23,6 +23,8 @@ my $TWITTER_JID = 'twitter@twitter.com';
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
 
+select(STDERR); $| = 1; select(STDOUT);
+
 *LOG = *STDERR;
 
 my $mainloop = 1;
