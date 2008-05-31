@@ -60,15 +60,26 @@ while(my $update = $sth->fetchrow_hashref)
 \$list = array(
 EOM
 
+    my %exploders = ();
     my $sth_stats = $dbh->prepare('SELECT b.target AS target, b.posted_at AS posted_at, s.status_text AS status_text, s.permalink AS permalink, s.name AS name, s.screen_name AS screen_name FROM statuses s, bombs b WHERE s.status_id = b.status_id AND b.posted_at IS NOT NULL AND LOWER(b.target) = LOWER(?) ORDER BY s.status_id DESC');
     $sth_stats->execute($target);
     while(my $stats = $sth_stats->fetchrow_hashref)
     {
         #print FH $stats->{permalink} . "\n";
         print FH "array('permalink' => '$stats->{permalink}', 'screen_name' => '$stats->{screen_name}', 'name' => '$stats->{name}', 'status_text' => '$stats->{status_text}', 'posted_at' => '$stats->{posted_at}'),\n";
+        $exploders{$stats->{screen_name}}++;
     }
     $sth_stats->finish;
 
+    print FH <<"EOM";
+);
+\$requested_by = array(
+EOM
+    foreach(sort { $exploders{$b} <=> $exploders{$a} } keys %exploders)
+    {
+        printf FH "array('screen_name' => '%s', 'count' => %d),\n",
+            $_, $exploders{$_};
+    }
     print FH <<"EOM";
 );
 include('../detail_template.php');

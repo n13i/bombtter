@@ -31,7 +31,17 @@
     </div>
     <h1><?=$title?></h1>
     <p>
-      <?=$bombcount?> 回爆発しています。
+      <?=$bombcount?> 回爆発しています。<br />
+<?php
+for($i = 0; $i < 5; $i++)
+{
+    if($i >= count($requested_by)) { break; }
+    $request = $requested_by[$i];
+    $screen_name = str_replace('@', '', $request['screen_name']);
+    printf('<a href="http://twitter.com/%s">@%s</a>(%d) ',
+        $screen_name, $screen_name, $request['count']);
+}
+?>
     </p>
     <div class="entry">
       <ol class="bombcloud">
