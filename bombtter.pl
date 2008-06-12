@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # vim: noexpandtab
 
 # Bombtter - What are you bombing?
@@ -113,7 +113,6 @@ sub bombtter_scraper
 	my $ignore_name = $conf->{twitter}->{username};
 	logger('scraper', "ignore: $ignore_name");
 
-	#$dbh->do('CREATE TABLE statuses (status_id INTEGER UNIQUE, permalink TEXT, screen_name TEXT, name TEXT, status_text TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, analyzed INTEGER)');
 
 	# ソースごとのローカル最新ステータス ID を取得
 	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM statuses WHERE source = ' . $source . ' ORDER BY status_id DESC LIMIT 1');
@@ -220,7 +219,6 @@ sub bombtter_analyzer
 
 	logger('analyzer', 'running analyzer ' . $Bombtter::Analyzer::revision);
 
-	#$dbh->do('CREATE TABLE bombs (status_id INTEGER UNIQUE, target TEXT, ctime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, source INTEGER, posted_at TIMESTAMP)');
 
 	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
@@ -399,7 +397,7 @@ sub bombtter_publisher
 
 		my $bomb_result = 0;
 		my $post;
-		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|自販機|自動販売機|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair/i)
+		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair/i)
 		{
 			# 自重すべきもの
 			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
