@@ -314,7 +314,7 @@ sub bombtter_publisher
 		logger('publisher', 'limit source: ' . $source_name[$limit_source]);
 	}
 
-	my $enable_posting = $conf->{'enable_posting'} || 0;
+	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
 
@@ -500,11 +500,15 @@ sub bombtter_publisher
 				&error('failed to update');
 			}
 
-			my $twit2 = Net::Twitter->new(
-				username => $conf->{twitter_raw}->{username},
-				password => $conf->{twitter_raw}->{password});
-			$status = $twit2->update(encode('utf8',
-				sprintf('%d,%d|%s|%s', $bomb_result, $count, $permalink, $target)));
+			if($conf->{twitter_raw}->{enable})
+			{
+				my $twit2 = Net::Twitter->new(
+					username => $conf->{twitter_raw}->{username},
+					password => $conf->{twitter_raw}->{password});
+				$status = $twit2->update(encode('utf8',
+					sprintf('%d,%d|%s|%s',
+						$bomb_result, $count, $permalink, $target)));
+			}
 		}
 	}
 	$sth->finish;
