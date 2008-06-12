@@ -441,7 +441,7 @@ sub bombtter_publisher
 			password => $conf->{twitter}->{password});
 
 	$sth = $dbh->prepare(
-			'UPDATE bombs SET posted_at = CURRENT_TIMESTAMP WHERE status_id = ?');
+			'UPDATE bombs SET posted_at = CURRENT_TIMESTAMP, result = ? WHERE status_id = ?');
 	my $n_posted = 0;
 	foreach(@posts)
 	{
@@ -492,7 +492,7 @@ sub bombtter_publisher
 
 			if($twit->http_code == 200)
 			{
-				$sth->execute($_->{'id'});
+				$sth->execute($bomb_result, $_->{'id'});
 				$n_posted++;
 			}
 			else
