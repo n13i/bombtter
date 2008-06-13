@@ -21,7 +21,7 @@ my $longterm_days = 7;
 my $shortterm_hours = 3;
 
 my $dt_now = DateTime->now(time_zone => '+0000');
-$dt_now->subtract(hours => 28);
+#$dt_now->subtract(hours => 28);
 
 my $twit = Net::Twitter->new(
 		username => $conf->{twitter}->{username},
