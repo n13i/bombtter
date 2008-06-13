@@ -74,7 +74,7 @@ foreach my $st (@shortterm)
         {
             $count_lt = $lt->{count};
             # 最近一週間の 1 日平均
-            $level_lt = $count_lt/$longterm_days;
+            $level_lt = $count_lt/$longterm_days * 1.5;
             last;
         }
     }
