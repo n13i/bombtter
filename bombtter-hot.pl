@@ -5,6 +5,7 @@ use utf8;
 
 use DateTime;
 use Net::Twitter;
+use Encode;
 
 use lib './lib';
 use Bombtter;
