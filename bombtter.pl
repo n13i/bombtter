@@ -138,14 +138,15 @@ sub bombtter_scraper
 			logger('scraper', "sleeping 5 sec ...");
 			sleep(5);
 	
-			if($try == 0)
-			{
-				$r = fetch_rss();
-			}
-			else
-			{
-				$r = fetch_html($try + 1);
-			}
+#			if($try == 0)
+#			{
+#				$r = fetch_rss();
+#			}
+#			else
+#			{
+#				$r = fetch_html($try + 1);
+#			}
+			$r = fetch_html($try + 1);
 			&error if(!defined($r));
 	
 			$remote_earliest_status_id = $r->{'earliest_status_id'};
