@@ -72,7 +72,7 @@ EOM
         }
         else
         {
-            print FH "array('permalink' => '$stats->{permalink}', 'screen_name' => '$stats->{screen_name}', 'name' => '$stats->{name}', 'status_text' => '(protected)', 'posted_at' => '$stats->{posted_at}'),\n";
+            print FH "array('permalink' => '#', 'screen_name' => 'Protected User', 'name' => 'Protected User', 'status_text' => '$stats->{status_text}', 'posted_at' => '$stats->{posted_at}'),\n";
         }
         $exploders{$stats->{screen_name}}++;
     }
