@@ -1,5 +1,4 @@
 package Bombtter::Fetcher;
-# vim: noexpandtab
 
 # Twitter 検索をスクレイピングする
 # 2008/03/17 naoh
@@ -15,7 +14,7 @@ use vars qw(@ISA @EXPORT $VERSION $revision);
 $VERSION = '0.20';
 $revision = '$Rev$';
 @ISA = qw(Exporter);
-@EXPORT = qw(fetch_rss fetch_html read_html fetch_followers);
+@EXPORT = qw(fetch_rss fetch_html read_html fetch_api fetch_im);
 
 use LWP::UserAgent;
 use Encode;
@@ -23,7 +22,6 @@ use Web::Scraper;
 use URI;
 use Net::Twitter;
 use Net::Twitter::Diff;
-use HTML::Entities;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -146,16 +144,15 @@ sub _parse_rss
 				$screen_name_noat =~ s/^\@//;
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
-				# 二重にエンティティ化されているため
-				$status_text = decode_entities($status_text);
 				$status_text = &_normalize_status_text($status_text);
 
 				push(@$r_statuses, {
-					'status_id'   => $status_id,
-					'permalink'   => $permalink,
-					'name'        => $name,
-					'screen_name' => $screen_name,
-					'status_text' => $status_text,
+					status_id    => $status_id,
+					permalink    => $permalink,
+					name         => $name,
+					screen_name  => $screen_name,
+					status_text  => $status_text,
+					is_protected => 0,  # public rss
 				});
 
 				if($status_id < $earliest_status_id)
@@ -216,11 +213,12 @@ sub _scrape_html_regexp
 				#print "$status\n---\n";
 
 				push(@$r_statuses, {
-					'status_id'   => $status_id,
-					'permalink'   => $permalink,
-					'name'        => $name,
-					'screen_name' => $screen_name,
-					'status_text' => $status_text,
+					status_id    => $status_id,
+					permalink    => $permalink,
+					name         => $name,
+					screen_name  => $screen_name,
+					status_text  => $status_text,
+					is_protected => 0,  # public html
 				});
 
 				if($status_id < $earliest_status_id)
@@ -242,6 +240,7 @@ sub _scrape_html_regexp
 	}
 }
 
+=comment
 sub _scrape_html_web_scraper
 {
 	my $html = shift || return undef;
@@ -315,8 +314,9 @@ sub _scrape_html_web_scraper
 		'statuses' => $r_statuses,
 	};
 }
+=cut
 
-sub _fetch_followers_api
+sub fetch_api
 {
 	my $username = shift || return undef;
 	my $password = shift || return undef;
@@ -328,7 +328,8 @@ sub _fetch_followers_api
 	my $twit = Net::Twitter::Diff->new(username => $username, password => $password);
 
 	#my $followers = $twit->followers();
-	my $followers = $twit->xfollowers();
+	#my $followers = $twit->xfollowers();
+	my $followers = [];
 	if(!defined($followers))
 	{
 		print "can't get followers\n";
@@ -341,16 +342,18 @@ sub _fetch_followers_api
 		print "can't get replies\n";
 		return undef;
 	}
-	print $username . ' has ' . ($#$followers+1) . " followers\n";
+	printf "%s has %d followers, got %d replies\n", $username, $#{$followers}+1, $#{$replies}+1;
 
 	foreach(@$followers)
 	{
 		last if(ref($_) ne 'HASH');
 
+		my $is_protected = 0;
 		if($_->{protected})
 		{
-			print $_->{screen_name} . " is protected; skip.\n";
-			next;
+			#print $_->{screen_name} . " is protected; skip.\n";
+			#next;
+			$is_protected = 1;
 		}
 
 		if($_->{status}->{text} !~ /$SEARCH_KEYWORD/)
@@ -367,20 +370,25 @@ sub _fetch_followers_api
 		$status_text = &_normalize_status_text($status_text);
 
 		push(@$r_statuses, {
-			'status_id'   => $status_id,
-			'permalink'   => $permalink,
-			'name'        => $name,
-			'screen_name' => $screen_name,
-			'status_text' => $status_text,
+			status_id    => $status_id,
+			permalink    => $permalink,
+			name         => $name,
+			screen_name  => $screen_name,
+			status_text  => $status_text,
+			is_protected => $is_protected,
 		});
 	}
 
 	foreach(@$replies)
 	{
+		last if(ref($_) ne 'HASH');
+
+		my $is_protected = 0;
 		if($_->{user}->{protected})
 		{
-			print $_->{user}->{screen_name} . " is protected; skip.\n";
-			next;
+			#print $_->{user}->{screen_name} . " is protected; skip.\n";
+			#next;
+			$is_protected = 1;
 		}
 
 		if($_->{text} !~ /$SEARCH_KEYWORD/)
@@ -397,11 +405,12 @@ sub _fetch_followers_api
 		$status_text = &_normalize_status_text($status_text);
 
 		push(@$r_statuses, {
-			'status_id'   => $status_id,
-			'permalink'   => $permalink,
-			'name'        => $name,
-			'screen_name' => $screen_name,
-			'status_text' => $status_text,
+			status_id    => $status_id,
+			permalink    => $permalink,
+			name         => $name,
+			screen_name  => $screen_name,
+			status_text  => $status_text,
+			is_protected => $is_protected,
 		});
 	}
 
@@ -419,7 +428,7 @@ sub _fetch_followers_api
 	};
 }
 
-sub fetch_followers
+sub fetch_im
 {
 	my $dbfile = shift || return undef;
 	my $timeout = shift || 5000;
@@ -432,7 +441,7 @@ sub fetch_followers
 	$dbh->func($timeout, 'busy_timeout');
 
 	my $sth = $dbh->prepare(
-		'SELECT status_id, permalink, name, screen_name, status_text ' .
+		'SELECT status_id, permalink, name, screen_name, status_text, is_protected ' .
 		'FROM statuses ORDER BY status_id DESC LIMIT ?');
 	$sth->execute(30);
 	while(my $status = $sth->fetchrow_hashref)
@@ -454,9 +463,6 @@ sub _normalize_status_text
 {
 	my $s = shift || '';
 
-	# HTML 文字エンティティのデコード
-	$s = decode_entities($s);
-
 	# @ リンクの除去
 	$s =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
 
@@ -469,3 +475,4 @@ sub _normalize_status_text
 1;
 __END__
 
+# vim: noexpandtab
