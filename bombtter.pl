@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# vim: noexpandtab
 
 # Bombtter - What are you bombing?
 # 2008/03/16 naoh
@@ -21,7 +20,7 @@ use Bombtter::Analyzer;
 my $LOCKDIR = 'lock/';
 my $LOCKFILE = 'lock';
 
-my @source_name = ('Twitter search', 'followers');
+my @source_name = ('Twitter search', 'IM', 'API');
 
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
@@ -50,19 +49,20 @@ if($mode eq 'auto')
 	print $min . "\n";
 	if($min % ($conf->{automode_search_interval} || 20) == 0)
 	{
-		$mode          = 'both';
+		$mode		   = 'both';
 		$scrape_source = 0;      # search only
 		$post_source   = -1;     # search + followers
 	}
 	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
 	{
-		$mode          = 'both';
-		$scrape_source = 1;      # followers only
+		$mode		   = 'both';
+		#$scrape_source = 1;      # IM only
+		$scrape_source = 2;      # API only
 		$post_source   = -1;     # search + followers
 	}
 	else
 	{
-		$mode          = 'post';
+		$mode		   = 'post';
 		$post_source   = 1;     # followers only
 	}
 }
@@ -84,7 +84,7 @@ my $dbh = db_connect($conf) or &error('db_connect failed');
 
 if($mode eq 'fetch' || $mode eq 'both')
 {
-	&bombtter_scraper($conf, $dbh, $scrape_source);
+	&bombtter_fetcher($conf, $dbh, $scrape_source);
 	&bombtter_analyzer($conf, $dbh);
 }
 if($mode eq 'post' || $mode eq 'both')
@@ -100,24 +100,24 @@ exit;
 
 # Twitter 検索をスクレイピングしてデータベースに格納する
 # 2008/03/17 naoh
-sub bombtter_scraper
+sub bombtter_fetcher
 {
 	my $conf = shift || return undef;
 	my $dbh = shift || return undef;
 
 	my $source = shift || 0;
 
-	logger('scraper', 'running scraper ' . $Bombtter::Fetcher::revision);
-	logger('scraper', 'source: ' . $source_name[$source]);
+	logger('fetcher', 'running fetcher ' . $Bombtter::Fetcher::revision);
+	logger('fetcher', 'source: ' . $source_name[$source]);
 
 	my $ignore_name = $conf->{twitter}->{username};
-	logger('scraper', "ignore: $ignore_name");
+	logger('fetcher', "ignore: $ignore_name");
 
 
 	# ソースごとのローカル最新ステータス ID を取得
 	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM statuses WHERE source = ' . $source . ' ORDER BY status_id DESC LIMIT 1');
 	my $local_latest_status_id = $hashref->{'status_id'} || 0;
-	logger('scraper', "Latest status_id = $local_latest_status_id");
+	logger('fetcher', "Latest status_id = $local_latest_status_id");
 
 
 	my $try = 0;
@@ -128,76 +128,76 @@ sub bombtter_scraper
 	# リモートの(1ページの)一番古い番号がローカルの一番新しい番号より大きければ
 	# 未取得のデータがある
 	my $sth = $dbh->prepare(
-		'INSERT OR IGNORE INTO statuses (status_id, permalink, screen_name, name, status_text, source)' .
-		' VALUES (?, ?, ?, ?, ?, ?)');
+		'INSERT OR IGNORE INTO statuses (status_id, permalink, screen_name, name, status_text, source, is_protected)' .
+		' VALUES (?, ?, ?, ?, ?, ?, ?)');
 	while($remote_earliest_status_id >= $local_latest_status_id && $try < $try_max)
 	{
 		my $r = [];
 		if($source == 0)
 		{
-			logger('scraper', "sleeping 5 sec ...");
+			logger('fetcher', "sleeping 5 sec ...");
 			sleep(5);
-	
-#			if($try == 0)
-#			{
-#				$r = fetch_rss();
-#			}
-#			else
-#			{
-#				$r = fetch_html($try + 1);
-#			}
+
+			#$r = fetch_rss();
 			$r = fetch_html($try + 1);
 			&error if(!defined($r));
 	
-			$remote_earliest_status_id = $r->{'earliest_status_id'};
+			$remote_earliest_status_id = $r->{earliest_status_id};
 		}
 		elsif($source == 1)
 		{
-			#$r = fetch_followers($conf->{twitter}->{username},
-			#					 $conf->{twitter}->{password});
-			$r = fetch_followers($conf->{db}->{im});
+			$r = fetch_im($conf->{db}->{im});
 			&error if(!defined($r));
 
 			# 強制的にリモートの最古 < ローカルの最新になるようにする
+			$remote_earliest_status_id = -1;
+		}
+		elsif($source == 2)
+		{
+			$r = fetch_api($conf->{twitter}->{username},
+						   $conf->{twitter}->{password});
+			&error if(!defined($r));
+
 			$remote_earliest_status_id = -1;
 		}
 		else
 		{
 			&error;
 		}
-		logger('scraper', 'got ' . ($#{$r->{'statuses'}}+1) . ' status(es)');
+		logger('fetcher', 'got ' . ($#{$r->{statuses}}+1) . ' status(es)');
 
-		logger('scraper', "remote: $remote_earliest_status_id / local: $local_latest_status_id");
+		logger('fetcher', "remote: $remote_earliest_status_id / local: $local_latest_status_id");
 
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
-		foreach(@{$r->{'statuses'}})
+		foreach(@{$r->{statuses}})
 		{
-			if($_->{'screen_name'} =~ /^$ignore_name$/)
+			if($_->{screen_name} =~ /^$ignore_name$/)
 			{
 				next;
 			}
 
-			if($_->{'status_id'} > $local_latest_status_id)
+			if($_->{status_id} > $local_latest_status_id)
 			{
 				# ローカルの最新より新しいデータ
-				logger('scraper', 'insert: ' .
-					   $_->{'status_id'} . '|' .
-					   $_->{'screen_name'} . '|' .
-					   $_->{'status_text'});
-				$sth->execute($_->{'status_id'},
-							  $_->{'permalink'},
-							  $_->{'screen_name'},
-							  $_->{'name'},
-							  $_->{'status_text'},
-							  $source);
+				logger('fetcher', 'insert: ' .
+					   $_->{status_id} . '|' .
+					   $_->{screen_name} . '|' .
+					   $_->{status_text});
+				$sth->execute($_->{status_id},
+							  $_->{permalink},
+							  $_->{screen_name},
+							  $_->{name},
+							  $_->{status_text},
+							  $source,
+							  $_->{is_protected});
 				$inserted++;
 			}
 			else
 			{
-				logger('scraper', 'ignore: ' .
-					   $_->{'status_id'} . '|' .
-					   $_->{'screen_name'} . '|' .
-					   $_->{'status_text'});
+				logger('fetcher', 'ignore: ' .
+					   $_->{status_id} . '|' .
+					   $_->{screen_name} . '|' .
+					   $_->{status_text});
 			}
 		}
 		$dbh->commit;
@@ -206,7 +206,7 @@ sub bombtter_scraper
 	}
 	$sth->finish;
 
-	logger('scraper', "$inserted inserted.");
+	logger('fetcher', "$inserted inserted.");
 
 	return 1;
 }
@@ -560,3 +560,4 @@ sub error
 	exit;
 }
 
+# vim: noexpandtab

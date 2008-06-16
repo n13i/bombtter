@@ -232,17 +232,19 @@ sub autofollow
         my $n = 0;
         foreach(@{$diff->{not_following}})
         {
-            last if($n > 20);
+            #last if($n > 20);
+            last if($n > 5);
             $n++;
     
             &debug('start following %s', $_);
-            &send_message('on ' . $_);
+            #&send_message('on ' . $_);
+            $twitter->follow($_);
         }
     
         $n = 0;
         foreach(@{$diff->{not_followed}})
         {
-            last if($n > 10); # API 制限対策
+            last if($n > 5); # API 制限対策
             $n++;
     
             &debug('stop following %s', $_);
