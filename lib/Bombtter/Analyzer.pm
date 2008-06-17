@@ -33,7 +33,7 @@ sub analyze
 	# @kyubotter 対策(1)
 	# 「@someoneが世界に"○○爆発しろ"を、要求しています。」
 	# ただ「爆発しろ」の場合はスルー
-	if($target =~ /^(.+?)が世界に&quot;(.+?爆発しろ.*)/)
+	if($target =~ /^告知 (.+?)が世界に(?:&quot;|")(.+?爆発しろ.*)/)
 	{
 		$kyubotter_requested_by = $1;
 		$target = $2;
@@ -245,7 +245,7 @@ sub analyze
 		#$object =~ s/\x{301c}/\x{ff5e}/g;
 
 		# @kyubotter 対策(3)
-		if($object =~ /(\@[$name]+)が世界に&quot;$/)
+		if($object =~ /(\@[$name]+)が世界に(?:&quot;|")$/)
 		{
 			$object = $1 . ' の要求により、世界';
 		}
