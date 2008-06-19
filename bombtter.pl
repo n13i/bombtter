@@ -56,8 +56,8 @@ if($mode eq 'auto')
 	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
 	{
 		$mode		   = 'both';
-		#$scrape_source = 1;      # IM only
-		$scrape_source = 2;      # API only
+		$scrape_source = 1;      # IM only
+		#$scrape_source = 2;      # API only
 		$post_source   = -1;     # search + followers
 	}
 	else
@@ -146,7 +146,8 @@ sub bombtter_fetcher
 		}
 		elsif($source == 1)
 		{
-			$r = fetch_im($conf->{db}->{im});
+			#$r = fetch_im($conf->{db}->{im});
+			$r = fetch_im($conf->{db}->{timeliner});
 			&error if(!defined($r));
 
 			# 強制的にリモートの最古 < ローカルの最新になるようにする
