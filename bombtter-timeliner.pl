@@ -160,7 +160,7 @@ sub parse_entry
 
     if($entry =~ m{<td class="content">\s*<strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
     {
-        $s->{name} = $1;
+        $s->{name} = &_normalize_status_text($1);
     }
 
     $s->{is_protected} = 1;
