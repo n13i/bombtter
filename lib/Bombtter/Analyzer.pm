@@ -28,6 +28,15 @@ sub analyze
 	my $target = shift || return undef;
 	my $mecab_opts = shift || '';
 
+	# @name
+	my $name = '\x{0000}-\x{001f}\x{0021}-\x{007e}';
+
+	my $in_reply_to = undef;
+	if($target =~ /^(\@[$name]+)/)
+	{
+		$in_reply_to = $1;
+	}
+
 	my $kyubotter_requested_by = undef;
 
 	# @kyubotter 対策(1)
@@ -73,9 +82,6 @@ sub analyze
 	$target =~ s/([^$ascii])\s([$ascii]+)/$1$2/g;
 	$target =~ s/([$ascii])\s([^$ascii]+)/$1$2/g;
 	$target = $target_name . $target;
-
-	# @name
-	my $name = '\x{0000}-\x{001f}\x{0021}-\x{007e}';
 
 	# 適当に解析
 	# FIXME 文頭以外の「@hoge 爆発しろ」はスペースで分割される
@@ -237,6 +243,13 @@ sub analyze
 
 		# 戻した結果が @hoge something なら something だけにする
 		$object =~ s/^(?:\@[$name]+\s+)+(.+)$/$1/;
+
+		# ex) @hoge のxxx爆発しろ！
+		if(defined($in_reply_to) &&
+		   $sentence[$#sentence]->{feature} =~ /^助詞,連体化,/)
+		{
+			$object = $in_reply_to . ' ' . $object;
+		}
 
 		# .@hoge を @hoge に
 		$object =~ s/\.\@([$name]+)/\@$1/;
