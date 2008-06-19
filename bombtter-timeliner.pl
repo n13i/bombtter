@@ -125,6 +125,7 @@ sub fetch_timeline
 		}
 
 		next if($_->{status_text} !~ /爆発しろ/);
+		next if($_->{is_protected} && $_->{status_text} !~ /^\@$conf->{twitter}->{username}/);
 
 		use YAML;
 		print Dump($_);
