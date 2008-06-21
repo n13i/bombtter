@@ -172,7 +172,7 @@ sub bombtter_fetcher
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
 		foreach(@{$r->{statuses}})
 		{
-			if($_->{screen_name} =~ /^$ignore_name$/)
+			if($_->{screen_name} =~ /^($ignore_name|korehahidoi_bot)$/)
 			{
 				next;
 			}
