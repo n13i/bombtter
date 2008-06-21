@@ -330,7 +330,7 @@ sub bombtter_publisher
 	logger('publisher', "bombs in queue: $n_unposted");
 
 	# buzz ってるものをスルー
-	$sth_buzz = $dbh->prepare('UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP WHERE target IN (SELECT target FROM buzz WHERE out_at IS NULL) AND posted_at IS NULL');
+	my $sth_buzz = $dbh->prepare('UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP WHERE target IN (SELECT target FROM buzz WHERE out_at IS NULL) AND posted_at IS NULL');
 	$sth_buzz->execute;
 	$sth_buzz->finish;
 	undef $sth_buzz;
