@@ -11,6 +11,7 @@ use utf8;
 use Net::Twitter;
 use Encode;
 use YAML;  # for YAML::Dump
+use DateTime;
 
 use lib './lib';
 use Bombtter;
@@ -31,6 +32,8 @@ if(!defined($ARGV[0]))
 {
 	&error("usage: bombtter.pl [auto|fetch|post|both] [-1|0|1] [-1|0|1]\n");
 }
+
+my $dt_now = DateTime->now(time_zone => '+0000');
 
 my $mode = $ARGV[0];
 
@@ -317,8 +320,39 @@ sub bombtter_publisher
 	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
-
 	my $sql;
+
+	# 一定期間内にある回数以上要求しているユーザの投稿をスルー
+	my $buzzterm = $dt_now->clone->subtract(hours => $conf->{buzzuser_term})->strftime('%Y-%m-%d %H:%M:%S');
+	logger('publisher', 'checking buzz-users in ctime > ' . $buzzterm .
+						' with thresh ' . $conf->{buzzuser_thresh});
+	$sql =
+		'UPDATE bombs SET result = -2, posted_at = CURRENT_TIMESTAMP ' .
+		'WHERE status_id IN ' .
+		'  (SELECT status_id FROM statuses WHERE screen_name IN ' .
+		'    (SELECT screen_name FROM statuses ' .
+		'       WHERE ctime > \'' . $buzzterm . '\' GROUP BY screen_name ' .
+		'       HAVING COUNT(*) > ' . $conf->{buzzuser_thresh}. ')' .
+		'  ) AND posted_at IS NULL';
+	my $sth_buzzuser = $dbh->prepare($sql);
+	$dbh->begin_work;
+	$sth_buzzuser->execute;
+	$dbh->commit;
+	$sth_buzzuser->finish;
+	undef $sth_buzzuser;
+
+	# buzz ってるものをスルー
+	logger('publisher', 'checking buzz-words');
+	my $sth_buzzword = $dbh->prepare(
+		'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
+		'WHERE target IN (SELECT target FROM buzz WHERE out_at IS NULL) ' .
+		'AND posted_at IS NULL');
+	$dbh->begin_work;
+	$sth_buzzword->execute;
+	$dbh->commit;
+	$sth_buzzword->finish;
+	undef $sth_buzzword;
+
 
 	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
 	if($limit_source >= 0)
@@ -328,12 +362,6 @@ sub bombtter_publisher
 	my $hashref = $dbh->selectrow_hashref($sql);
 	my $n_unposted = $hashref->{'count'};
 	logger('publisher', "bombs in queue: $n_unposted");
-
-	# buzz ってるものをスルー
-	my $sth_buzz = $dbh->prepare('UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP WHERE target IN (SELECT target FROM buzz WHERE out_at IS NULL) AND posted_at IS NULL');
-	$sth_buzz->execute;
-	$sth_buzz->finish;
-	undef $sth_buzz;
 
 	# post queue の数を見て limit を調節する
 	if($n_unposted >= 7)
@@ -437,6 +465,7 @@ sub bombtter_publisher
 		}
 
 		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid, 'result' => $bomb_result, 'permalink' => $permalink });
+		#print Dump($posts[$#posts]);
 	}
 	$sth->finish;
 
@@ -451,17 +480,17 @@ sub bombtter_publisher
 	my $n_posted = 0;
 	foreach(@posts)
 	{
-		my $post = $_->{'post'};
-		my $target = $_->{'target'};
-		my $rowid = $_->{'rowid'};
-		my $bomb_result = $_->{'result'};
-		my $permalink = $_->{'permalink'};
+		my $post = $_->{post};
+		my $target = $_->{target};
+		my $rowid = $_->{rowid};
+		my $bomb_result = $_->{result};
+		my $permalink = $_->{permalink};
 		my $count = 1;
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
 			'  WHERE target = ?' .
-			'    AND posted_at IS NOT NULL' .  # post されたものから数える
+			'    AND posted_at IS NOT NULL AND result = 1' .  # post されたものから数える
 			'  GROUP BY target';
 		my $sth_count = $dbh->prepare($sql);
 
