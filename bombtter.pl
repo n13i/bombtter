@@ -114,6 +114,13 @@ sub bombtter_fetcher
 	logger('fetcher', 'source: ' . $source_name[$source]);
 
 	my $ignore_name = $conf->{twitter}->{username};
+	if(defined($conf->{ignore_name_expr}))
+	{
+		if($conf->{ignore_name_expr} ne '')
+		{
+			$ignore_name .= '|' . $conf->{ignore_name_expr};
+		}
+	}
 	logger('fetcher', "ignore: $ignore_name");
 
 
@@ -175,7 +182,7 @@ sub bombtter_fetcher
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
 		foreach(@{$r->{statuses}})
 		{
-			if($_->{screen_name} =~ /^($ignore_name|korehahidoi_bot)$/)
+			if($_->{screen_name} =~ /^$ignore_name$/)
 			{
 				next;
 			}
@@ -198,10 +205,10 @@ sub bombtter_fetcher
 			}
 			else
 			{
-				logger('fetcher', 'ignore: ' .
-					   $_->{status_id} . '|' .
-					   $_->{screen_name} . '|' .
-					   $_->{status_text});
+#				logger('fetcher', 'ignore: ' .
+#					   $_->{status_id} . '|' .
+#					   $_->{screen_name} . '|' .
+#					   $_->{status_text});
 			}
 		}
 		$dbh->commit;
