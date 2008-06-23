@@ -29,7 +29,7 @@ my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{db}->{bombcloud}, '', '', 
 
 my @posts = ();
 #my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs GROUP BY target HAVING count >= ? ORDER BY count DESC');
-my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs WHERE posted_at IS NOT NULL GROUP BY LOWER(target) HAVING count >= ' . $thresh . ' ORDER BY count DESC, target');
+my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs WHERE posted_at IS NOT NULL AND result = 1 GROUP BY LOWER(target) HAVING count >= ' . $thresh . ' ORDER BY count DESC, target');
 #$sth->execute($thresh);
 $sth->execute();
 while(my $update = $sth->fetchrow_hashref)
