@@ -528,7 +528,7 @@ sub bombtter_publisher
 		{
 			$status = $twit->update(encode('utf8', $post));
 
-			logger('publisher', 'update: code ' .
+			logger('publisher', 'update main: code ' .
 								$twit->http_code . ' ' . $twit->http_message);
 			logger('publisher', Dump($status));
 
@@ -547,9 +547,15 @@ sub bombtter_publisher
 				my $twit2 = Net::Twitter->new(
 					username => $conf->{twitter_raw}->{username},
 					password => $conf->{twitter_raw}->{password});
-				$status = $twit2->update(encode('utf8',
-					sprintf('%d,%d|%s|%s',
-						$bomb_result, $count, $permalink, $target)));
+				for(my $try = 0; $try < 3; $try++)
+				{
+					$status = $twit2->update(encode('utf8',
+						sprintf('%d,%d|%s|%s',
+							$bomb_result, $count, $permalink, $target)));
+					logger('publisher', 'update raw: code ' .
+							$twit2->http_code . ' ' . $twit2->http_message);
+					last if($twit2->http_code == 200);
+				}
 			}
 		}
 	}
