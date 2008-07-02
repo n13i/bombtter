@@ -373,7 +373,7 @@ sub bombtter_publisher
 	# post queue の数を見て limit を調節する
 	if($n_unposted >= 7)
 	{
-		$limit = 2;
+#		$limit = 2;
 	}
  
 	my @posts = ();
@@ -440,7 +440,7 @@ sub bombtter_publisher
 
 		my $bomb_result = 0;
 		my $post;
-		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair/i)
+		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair|洞爺湖/i)
 		{
 			# 自重すべきもの
 			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
