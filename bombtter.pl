@@ -526,7 +526,7 @@ sub bombtter_publisher
 		my $status = undef;
 		if($enable_posting)
 		{
-			$status = $twit->update(encode('utf8', $post));
+			eval { $status = $twit->update(encode('utf8', $post)); };
 
 			logger('publisher', 'update main: code ' .
 								$twit->http_code . ' ' . $twit->http_message);
@@ -549,9 +549,11 @@ sub bombtter_publisher
 					password => $conf->{twitter_raw}->{password});
 				for(my $try = 0; $try < 3; $try++)
 				{
-					$status = $twit2->update(encode('utf8',
-						sprintf('%d,%d|%s|%s',
-							$bomb_result, $count, $permalink, $target)));
+					eval {
+						$status = $twit2->update(encode('utf8',
+							sprintf('%d,%d|%s|%s',
+								$bomb_result, $count, $permalink, $target)));
+					};
 					logger('publisher', 'update raw: code ' .
 							$twit2->http_code . ' ' . $twit2->http_message);
 					last if($twit2->http_code == 200);
