@@ -126,8 +126,11 @@ foreach my $b (@buzz)
         {
     		if($conf->{twitter}->{enable})
     		{
-				my $status = $twit->update(encode('utf8',
-					sprintf('HOT: %s', $b->{target})));
+                my $status;
+                eval {
+    				$status = $twit->update(encode('utf8',
+    					sprintf('HOT: %s', $b->{target})));
+                };
 				if($twit->http_code == 200)
 				{
 	        		$sth->execute($b->{target});
