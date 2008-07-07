@@ -109,6 +109,7 @@ print FH <<EOM;
 <head>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
   <meta http-equiv="content-style-type" content="text/css"/>
+  <meta name="robots" content="noindex,nofollow,noarchive"/>
   <title>bombtter - bombcloud :: labs.m2hq.net</title>
   <link rel="stylesheet" type="text/css" href="http://labs.m2hq.net/css/default.css"/>
 </head>
