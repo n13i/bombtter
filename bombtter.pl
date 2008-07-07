@@ -236,8 +236,9 @@ sub bombtter_analyzer
 	$sth->execute();
 
 	my @analyze_ok_ids = ();
-	my @analyze_ng_ids = ();
+	my @analyze_fail_ids = ();
 	my @analyze_nobomb_ids = ();
+	my @analyze_ng_ids = ();
 
 	my $mecab_opts = '';
 	if(defined($conf->{'mecab_userdic'}))
@@ -271,13 +272,21 @@ sub bombtter_analyzer
 
 		if(defined($bombed))
 		{
-			push(@analyze_ok_ids, $status_id);
-			$sth_insert->execute($status_id, $bombed, $source);
-			logger('analyzer', "result: " . $bombed);
+			if($bombed =~ /障害者|知障/)
+			{
+				push(@analyze_ng_ids, $status_id);
+				logger('analyzer', "result: NG");
+			}
+			else
+			{
+				push(@analyze_ok_ids, $status_id);
+				$sth_insert->execute($status_id, $bombed, $source);
+				logger('analyzer', "result: " . $bombed);
+			}
 		}
 		else
 		{
-			push(@analyze_ng_ids, $status_id);
+			push(@analyze_fail_ids, $status_id);
 			logger('analyzer', "result:");
 		}
 
@@ -297,13 +306,17 @@ sub bombtter_analyzer
 	{
 		$sth->execute(1, $_);
 	}
-	foreach(@analyze_ng_ids)
+	foreach(@analyze_fail_ids)
 	{
 		$sth->execute(0, $_);
 	}
 	foreach(@analyze_nobomb_ids)
 	{
 		$sth->execute(-1, $_);
+	}
+	foreach(@analyze_ng_ids)
+	{
+		$sth->execute(-2, $_);
 	}
 	$dbh->commit;
 	$sth->finish;
@@ -440,7 +453,7 @@ sub bombtter_publisher
 
 		my $bomb_result = 0;
 		my $post;
-		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair|洞爺湖/i)
+		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair|洞爺湖|サミット/i)
 		{
 			# 自重すべきもの
 			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
