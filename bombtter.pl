@@ -429,7 +429,7 @@ sub bombtter_publisher
 			# 自爆
 
 #			# 身代わりに何か適当なものを爆発させる
-#			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL ORDER BY RANDOM() LIMIT 1');
+#			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL AND result = 1 ORDER BY RANDOM() LIMIT 1');
 #			my $subst = $hashref->{'target'};
 #
 #			if(!defined($subst))
@@ -509,7 +509,7 @@ sub bombtter_publisher
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
-			'  WHERE target = ?' .
+			'  WHERE LOWER(target) = LOWER(?)' .
 			'    AND posted_at IS NOT NULL AND result = 1' .  # post されたものから数える
 			'  GROUP BY target';
 		my $sth_count = $dbh->prepare($sql);
