@@ -510,8 +510,8 @@ sub bombtter_publisher
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
 			'  WHERE LOWER(target) = LOWER(?)' .
-			'    AND posted_at IS NOT NULL AND result = 1' .  # post されたものから数える
-			'  GROUP BY target';
+			'    AND posted_at IS NOT NULL AND result = 1';  # post されたものから数える
+#			'  GROUP BY target';
 		my $sth_count = $dbh->prepare($sql);
 
 		$sth_count->execute($target);
