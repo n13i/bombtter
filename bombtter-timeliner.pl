@@ -207,8 +207,8 @@ sub login
     $ua->get('https://twitter.com/login');
     print "Login: as $username\n";
     $res = $ua->post('https://twitter.com/sessions' => {
-        username_or_email => $username,
-        password => $password,
+        'session[username_or_email]' => $username,
+        'session[password]' => $password,
         remember_me => 1,
     });
     my $n_redirect = 0;
