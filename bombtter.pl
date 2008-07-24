@@ -274,6 +274,7 @@ sub bombtter_analyzer
 		{
 			if($bombed =~ /障害者|知障/)
 			{
+				# political through
 				push(@analyze_ng_ids, $status_id);
 				logger('analyzer', "result: NG");
 			}
@@ -522,7 +523,8 @@ sub bombtter_publisher
 			# oo充: けまらしい
 			# skylab13: requested by supistar, 2008/05/29
 			# 夏休み|夏厨: 2008/07/18
-			if(($target =~ /充$/ || $target =~ /skylab13/ || $target =~ /夏休み|夏厨/)
+			# twitter: 2008/07/24
+			if(($target =~ /充$/ || $target =~ /skylab13/ || $target =~ /夏休み|夏厨/ || $target =~ /^twitter$|^ついったー?$/i)
 			   && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
