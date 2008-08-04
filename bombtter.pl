@@ -272,7 +272,7 @@ sub bombtter_analyzer
 
 		if(defined($bombed))
 		{
-			if($bombed =~ /障害者|知障/)
+			if($bombed =~ /障害者|知障|ガス|原爆|水爆|爆弾/)
 			{
 				# political through
 				push(@analyze_ng_ids, $status_id);
