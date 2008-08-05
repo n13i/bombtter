@@ -34,6 +34,7 @@ if(!defined($ARGV[0]))
 }
 
 my $dt_now = DateTime->now(time_zone => '+0000');
+my $dt_local_now = $dt_now->clone->set_time_zone('+0900');
 
 my $mode = $ARGV[0];
 
@@ -343,6 +344,21 @@ sub bombtter_publisher
 
 	my $sql;
 
+	# 時には自重する
+	if($dt_local_now->month == 8 &&
+	   ($dt_local_now->day == 6  || $dt_local_now->day == 9))
+	{
+		logger('publisher', 'take-care-of-myself mode activated');
+		my $sth_takecare = $dbh->prepare(
+			'UPDATE bombs SET result = -3, posted_at = CURRENT_TIMESTAMP ' .
+			'WHERE posted_at IS NULL');
+		$dbh->begin_work;
+		$sth_takecare->execute;
+		$dbh->commit;
+		$sth_takecare->finish;
+		undef $sth_takecare;
+	}
+
 	# 一定期間内にある回数以上要求しているユーザの投稿をスルー
 	my $buzzterm = $dt_now->clone->subtract(hours => $conf->{buzzuser_term})->strftime('%Y-%m-%d %H:%M:%S');
 	logger('publisher', 'checking buzz-users in ctime > ' . $buzzterm .
@@ -391,16 +407,6 @@ sub bombtter_publisher
 	}
  
 	my @posts = ();
-#	$sql =
-#		'SELECT rowid, status_id, target, (' .
-#		' SELECT COUNT(*) FROM bombs co ' .
-#		'  WHERE co.target = li.target' .
-#		'    AND co.posted_at IS NOT NULL' .  # post されたものから数える
-#		'  GROUP BY co.target) AS count ' .
-#		'FROM bombs li WHERE posted_at IS NULL ';
-#	$sql =
-#		'SELECT rowid, status_id, target ' .
-#		'FROM bombs li WHERE posted_at IS NULL ';
 	$sql =
 		'SELECT rowid, status_id, target, (SELECT s.permalink FROM statuses s WHERE s.status_id = b.status_id) AS permalink ' .
 		'FROM bombs b WHERE posted_at IS NULL ';
