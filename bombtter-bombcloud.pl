@@ -68,7 +68,12 @@ EOM
         #print FH $stats->{permalink} . "\n";
         if($stats->{is_protected} == 0)
         {
-            print FH "array('permalink' => '$stats->{permalink}', 'screen_name' => '$stats->{screen_name}', 'name' => '$stats->{name}', 'status_text' => '$stats->{status_text}', 'posted_at' => '$stats->{posted_at}'),\n";
+            printf FH "array('permalink' => '%s', 'screen_name' => '%s', 'name' => '%s', 'status_text' => '%s', 'posted_at' => '%s'),\n",
+                $stats->{permalink},
+                &escquote($stats->{screen_name}),
+                &escquote($stats->{name}),
+                &escquote($stats->{status_text}),
+                $stats->{posted_at};
             $exploders{$stats->{screen_name}}++;
         }
         else
@@ -95,6 +100,7 @@ EOM
     close(FH);
 }
 $sth->finish;
+undef $sth;
 
 $dbh->disconnect;
 
@@ -158,4 +164,13 @@ print FH <<EOM;
 
 </html>
 EOM
+
+
+
+sub escquote
+{
+    my $str = shift || return '';
+    $str =~ s/'/\\'/g;
+    return $str;
+}
 
