@@ -531,7 +531,8 @@ sub bombtter_publisher
 			# 夏休み|夏厨: 2008/07/18
 			# twitter: 2008/07/24
 			# (ザマ|ざま)(ソニ|そに): 2008/08/10
-			if(($target =~ /充$/ || $target =~ /skylab13/ || $target =~ /夏休み|夏厨/ || $target =~ /^twitter$|^ついったー?$/i || $target =~ /^(ザマ|ざま)(ソニ|そに)$/)
+			# 福田: 2008/09/01
+			if(($target =~ /充$/ || $target =~ /skylab13/ || $target =~ /夏休み|夏厨/ || $target =~ /^twitter$|^ついったー?$/i || $target =~ /^(ザマ|ざま)(ソニ|そに)$/ || $target =~ /福田/)
 			   && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
