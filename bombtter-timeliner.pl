@@ -91,9 +91,9 @@ sub fetch_timeline
 			{
 				#use YAML;
 				#print Dump($s);
-				printf "[%d] (%d) %s: %s\n",
+				printf "[%d] (%d) %s / %s: %s\n",
 					$s->{status_id}, $s->{is_protected},
-					$s->{name}, $s->{status_text};
+					$s->{screen_name}, $s->{name}, $s->{status_text};
 				if($s->{status_id} < $remote_oldest_id)
 				{
 					$remote_oldest_id = $s->{status_id};
