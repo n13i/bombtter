@@ -81,7 +81,7 @@ sub fetch_timeline
 			$html = decode('utf8', $res->content);
 		}
 
-		my @entries = $html =~ m{(<tr class="hentry.+?</tr>)}sg;
+		my @entries = $html =~ m{(<tr id="status_\d+" class="hentry.+?</tr>)}sg;
 		printf "entries: %d\n", $#entries+1;
 
 		foreach my $entry (@entries)
@@ -158,7 +158,7 @@ sub parse_entry
         is_protected => undef,
     };
 
-    if($entry =~ m{<td class="content">\s*<strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
+    if($entry =~ m{<div class="status-body">\s*<strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
     {
         $s->{name} = &_normalize_status_text($1);
     }
