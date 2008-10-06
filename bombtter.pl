@@ -538,7 +538,7 @@ sub bombtter_publisher
 			#   ハイアナーキスト$
 			#   ホモ花火$
 			#   ^芸術$
-			#   ^(IE|IME|Windows|Vista)$
+			#   (IE\d?|IME|Windows|Vista)$
 			#   [日月火水木金土]曜日$
 			if(($target =~ /充$/ ||
 				$target =~ /skylab13/ ||
@@ -551,7 +551,7 @@ sub bombtter_publisher
 				$target =~ /ハイアナーキスト$/ ||
 				$target =~ /ホモ花火$/ ||
 				$target =~ /^芸術$/ ||
-				$target =~ /^(IE|IME|Windows|Vista)$/i ||
+				$target =~ /(IE\d?|IME|Windows|Vista)$/i ||
 				$target =~ /[日月火水木金土]曜日$/)
 			   && $count > 1)
 			{
