@@ -23,7 +23,12 @@ use DBI;
 sub load_config
 {
 	my $conffile = shift || 'conf/bombtter.conf';
-	my $conf = YAML::LoadFile($conffile) or return undef;
+
+	open FH, '<:encoding(utf8)', $conffile or return undef;
+	my $yaml = join('', <FH>);
+	close FH;
+
+	my $conf = YAML::Load($yaml) or return undef;
 	return $conf;
 }
 
@@ -52,3 +57,4 @@ sub logger
 
 1;
 __END__
+# vim: noexpandtab

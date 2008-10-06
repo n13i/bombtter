@@ -232,6 +232,8 @@ sub bombtter_analyzer
 
 	logger('analyzer', 'running analyzer ' . $Bombtter::Analyzer::revision);
 
+	my $ng_target_expr = join('|', @{$conf->{ng_target_expr}});
+	logger('analyzer', 'NG target: ' . $ng_target_expr);
 
 	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
@@ -273,7 +275,7 @@ sub bombtter_analyzer
 
 		if(defined($bombed))
 		{
-			if($bombed =~ /障害者|知障|ガス|原爆|水爆|爆弾/)
+			if($bombed =~ /$ng_target_expr/i)
 			{
 				# political through
 				push(@analyze_ng_ids, $status_id);
@@ -338,6 +340,12 @@ sub bombtter_publisher
 	{
 		logger('publisher', 'limit source: ' . $source_name[$limit_source]);
 	}
+
+	my $ignore_target_expr = join('|', @{$conf->{ignore_target_expr}});
+	logger('publisher', 'IGNORE target: ' . $ignore_target_expr);
+
+	my $count_target_expr = join('|', @{$conf->{count_target_expr}});
+	logger('publisher', 'COUNT target: ' . $count_target_expr);
 
 	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
@@ -460,7 +468,7 @@ sub bombtter_publisher
 
 		my $bomb_result = 0;
 		my $post;
-		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館/i)
+		if($target =~ /$ignore_target_expr/i)
 		{
 			# 自重すべきもの
 			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
@@ -525,35 +533,7 @@ sub bombtter_publisher
 		if(my $ary = $sth_count->fetchrow_hashref)
 		{
 			$count = $ary->{count}+1;
-
-			# oo充: けまらしい
-			# skylab13: requested by supistar, 2008/05/29
-			# 夏休み|夏厨: 2008/07/18
-			# twitter: 2008/07/24
-			# (ザマ|ざま)(ソニ|そに): 2008/08/10
-			# 福田: 2008/09/01
-			# 2008/10/06: 頻出単語追加
-			#   ^(俺|自分)$
-			#   ^地球$
-			#   ハイアナーキスト$
-			#   ホモ花火$
-			#   ^芸術$
-			#   (IE\d?|IME|Windows|Vista)$
-			#   [日月火水木金土]曜日$
-			if(($target =~ /充$/ ||
-				$target =~ /skylab13/ ||
-				$target =~ /夏休み|夏厨/ ||
-				$target =~ /^twitter$|^ついったー?$/i ||
-				$target =~ /^(ザマ|ざま)(ソニ|そに)$/ ||
-				$target =~ /福田/ ||
-				$target =~ /^(俺|自分)$/ ||
-				$target =~ /^地球$/ ||
-				$target =~ /ハイアナーキスト$/ ||
-				$target =~ /ホモ花火$/ ||
-				$target =~ /^芸術$/ ||
-				$target =~ /(IE\d?|IME|Windows|Vista)$/i ||
-				$target =~ /[日月火水木金土]曜日$/)
-			   && $count > 1)
+			if($target =~ /$count_target_expr/i && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
 			}
