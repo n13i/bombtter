@@ -460,7 +460,7 @@ sub bombtter_publisher
 
 		my $bomb_result = 0;
 		my $post;
-		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館|NHK_onair|洞爺湖|サミット/i)
+		if($target =~ /イー・?モバ(イル)?|いー・?もば(いる)?|不発弾|広島(?!打線)|ひろしま|ヒロシマ|長崎|ながさき|ナガサキ|大使館/i)
 		{
 			# 自重すべきもの
 			$post = '昨今の社会情勢を鑑みて検討を行った結果、'
@@ -532,7 +532,27 @@ sub bombtter_publisher
 			# twitter: 2008/07/24
 			# (ザマ|ざま)(ソニ|そに): 2008/08/10
 			# 福田: 2008/09/01
-			if(($target =~ /充$/ || $target =~ /skylab13/ || $target =~ /夏休み|夏厨/ || $target =~ /^twitter$|^ついったー?$/i || $target =~ /^(ザマ|ざま)(ソニ|そに)$/ || $target =~ /福田/)
+			# 2008/10/06: 頻出単語追加
+			#   ^(俺|自分)$
+			#   ^地球$
+			#   ハイアナーキスト$
+			#   ホモ花火$
+			#   ^芸術$
+			#   ^(IE|IME|Windows|Vista)$
+			#   [日月火水木金土]曜日$
+			if(($target =~ /充$/ ||
+				$target =~ /skylab13/ ||
+				$target =~ /夏休み|夏厨/ ||
+				$target =~ /^twitter$|^ついったー?$/i ||
+				$target =~ /^(ザマ|ざま)(ソニ|そに)$/ ||
+				$target =~ /福田/ ||
+				$target =~ /^(俺|自分)$/ ||
+				$target =~ /^地球$/ ||
+				$target =~ /ハイアナーキスト$/ ||
+				$target =~ /ホモ花火$/ ||
+				$target =~ /^芸術$/ ||
+				$target =~ /^(IE|IME|Windows|Vista)$/i ||
+				$target =~ /[日月火水木金土]曜日$/)
 			   && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
