@@ -16,11 +16,12 @@ use lib './lib';
 use Bombtter;
 
 my $traceback_limit = 5;
-my $fetch_interval = 120;
 
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
 
+select(STDERR); $| = 1; select(STDOUT);
+*LOG = *STDERR;
 
 # login to twitter
 my $ua = LWP::UserAgent->new();
@@ -47,12 +48,23 @@ $SIG{INT} = \&stop;
 
 my $local_latest_id = 0;
 
+my $next_autofollow_time = time + $conf->{autofollow_interval};
+my $fetch_interval = $conf->{timeliner}->{fetch_interval} || 120;
+my $traceback_limit = $conf->{timeliner}->{traceback_limit} || 5;
+
 while($mainloop)
 {
 	print "===> fetching ...\n";
 	&fetch_timeline;
 	printf "===> done. wait %d seconds ...\n", $fetch_interval;
 	sleep $fetch_interval;
+
+	if(($conf->{autofollow_interval} || 0) > 0 &&
+	   time >= $next_autofollow_time)
+	{
+		&autofollow;
+		$next_autofollow_time = time + $conf->{autofollow_interval};
+	}
 }
 $dbh->disconnect;
 exit;
@@ -247,6 +259,49 @@ sub _normalize_status_text
 sub stop
 {
 	$mainloop = 0;
+}
+
+# ---------------------------------------------------------------------------
+# 自動 follow/remove 処理
+sub autofollow
+{
+    &debug('Performing auto follow/remove process ...');
+
+    eval {
+        my $diff = $twitter->diff();
+    
+        my $n = 0;
+        foreach(@{$diff->{not_following}})
+        {
+            #last if($n > 20);
+            last if($n > 5);
+            $n++;
+    
+            &debug('start following %s', $_);
+            #&send_message('on ' . $_);
+            $twitter->follow($_);
+        }
+    
+        $n = 0;
+        foreach(@{$diff->{not_followed}})
+        {
+            last if($n > 5); # API 制限対策
+            $n++;
+    
+            &debug('stop following %s', $_);
+            $twitter->stop_following($_);
+        }
+    };
+    warn $@ if $@;
+
+    &debug('auto follow/remove done.');
+}
+
+# ---------------------------------------------------------------------------
+sub debug
+{
+    my $fmtstr = shift;
+    printf LOG "$fmtstr\n", @_;
 }
 
 # vim: noexpandtab
