@@ -11,11 +11,10 @@ use HTTP::Cookies;
 use DBI;
 use Encode;
 use HTML::Entities;
+use Net::Twitter::Diff;
 
 use lib './lib';
 use Bombtter;
-
-my $traceback_limit = 5;
 
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
@@ -38,6 +37,11 @@ my $html = decode('utf8', $r->content);
 my $dbh = DBI->connect(
     'dbi:SQLite:dbname=' . $conf->{db}->{timeliner}, '', '', {unicode => 1});
 $dbh->func(5000, 'busy_timeout');
+
+my $twitter = Net::Twitter::Diff->new(
+	username => $conf->{twitter}->{username},
+	password => $conf->{twitter}->{password},
+);
 
 my $mainloop = 1;
 
