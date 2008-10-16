@@ -571,12 +571,17 @@ sub bombtter_publisher
 				my $twit2 = Net::Twitter->new(
 					username => $conf->{twitter_raw}->{username},
 					password => $conf->{twitter_raw}->{password});
+				my $trigger = '-/0';
+				if($permalink =~ m{twitter\.com/([^/]+)/statuses/(\d+)})
+				{
+					$trigger = $1 . '/' . $2;
+				}
 				for(my $try = 0; $try < 3; $try++)
 				{
 					eval {
 						$status = $twit2->update(encode('utf8',
 							sprintf('%d,%d|%s|%s',
-								$bomb_result, $count, $permalink, $target)));
+								$bomb_result, $count, $trigger, $target)));
 					};
 					logger('publisher', 'update raw: code ' .
 							$twit2->http_code . ' ' . $twit2->http_message);
