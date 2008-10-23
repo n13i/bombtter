@@ -190,7 +190,7 @@ sub parse_entry
         $s->{status_text} = &_normalize_status_text($1);
     }
 
-    if($entry =~ m{<span class="meta entry-meta">\s*<a href="https?://twitter\.com/([^/]+)/statuses/(\d+)" class="entry-date"}s)
+    if($entry =~ m{<span class="meta entry-meta">\s*<a href="https?://twitter\.com/([^/]+)/status(?:es)?/(\d+)" class="entry-date"}s)
     {
         $s->{status_id} = $2;
         $s->{permalink} = 'http://twitter.com/' . $1 . '/statuses/' . $2;
