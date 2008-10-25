@@ -246,7 +246,8 @@ sub analyze
 
 		# ex) @hoge のxxx爆発しろ！
 		if(defined($in_reply_to) &&
-		   $sentence[$#sentence]->{feature} =~ /^助詞,連体化,/)
+		   ($sentence[$#sentence]->{feature} =~ /^助詞,連体化,/ ||
+			$sentence[$#sentence]->{surface} eq "\x{2573}"))
 		{
 			$object = $in_reply_to . ' ' . $object;
 		}
