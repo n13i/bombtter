@@ -143,6 +143,14 @@ sub fetch_timeline
 		next if($_->{status_text} !~ /爆発しろ/);
 		next if($_->{is_protected} && $_->{status_text} !~ /^\@$conf->{twitter}->{username}/);
 
+		# FIXME
+		if(defined($s->{status_id}) && $s->{status_text} =~ /<img/)
+		{
+			# アイコン対策
+			my $status = $twitter->show_status($s->{status_id});
+	        $s->{status_text} = &_normalize_status_text($status->{text});
+		}
+
 		use YAML;
 		print Dump($_);
 
@@ -196,14 +204,6 @@ sub parse_entry
         $s->{permalink} = 'http://twitter.com/' . $1 . '/statuses/' . $2;
         $s->{screen_name} = '@' . $1;
     }
-
-	# FIXME
-	if(defined($s->{status_id}) && $s->{status_text} =~ /<img/)
-	{
-		# アイコン対策
-		my $status = $twitter->show_status($s->{status_id});
-        $s->{status_text} = &_normalize_status_text($status->{text});
-	}
 
 	if(defined($s->{status_id}) && defined($s->{permalink}) &&
 	   defined($s->{screen_name}) && defined($s->{name}) &&
