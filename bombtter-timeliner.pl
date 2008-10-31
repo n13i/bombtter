@@ -144,11 +144,11 @@ sub fetch_timeline
 		next if($_->{is_protected} && $_->{status_text} !~ /^\@$conf->{twitter}->{username}/);
 
 		# FIXME
-		if(defined($s->{status_id}) && $s->{status_text} =~ /<img/)
+		if(defined($_->{status_id}) && $_->{status_text} =~ /<img/)
 		{
 			# アイコン対策
-			my $status = $twitter->show_status($s->{status_id});
-	        $s->{status_text} = &_normalize_status_text($status->{text});
+			my $status = $twitter->show_status($_->{status_id});
+	        $_->{status_text} = &_normalize_status_text($status->{text});
 		}
 
 		use YAML;
