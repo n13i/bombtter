@@ -197,6 +197,14 @@ sub parse_entry
         $s->{screen_name} = '@' . $1;
     }
 
+	# FIXME
+	if(defined($s->{status_id}) && $s->{status_text} =~ /<img/)
+	{
+		# アイコン対策
+		my $status = $twitter->show_status($s->{status_id});
+        $s->{status_text} = &_normalize_status_text($status->{text});
+	}
+
 	if(defined($s->{status_id}) && defined($s->{permalink}) &&
 	   defined($s->{screen_name}) && defined($s->{name}) &&
 	   defined($s->{status_text}) && defined($s->{is_protected}))
