@@ -499,6 +499,10 @@ sub bombtter_publisher
 			$post = '. ' . $post;
 		}
 
+		# 2008/11/15
+		$post =~ s/([^\s])(\@[0-9a-zA-Z_]+)([^\s])/$1 $2 $3/g;
+		$post =~ s/^(\@[0-9a-zA-Z_]+)([^\s])/$1 $2/g;
+
 		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid, 'result' => $bomb_result, 'permalink' => $permalink });
 		#print Dump($posts[$#posts]);
 	}
