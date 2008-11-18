@@ -493,9 +493,11 @@ sub bombtter_publisher
 			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
 		}
 
-		# 2008/11/15
-		$post =~ s/([^\s])(\@[0-9a-zA-Z_]+)([^\s])/$1 $2 $3/g;
-		$post =~ s/^(\@[0-9a-zA-Z_]+)([^\s])/$1 $2/g;
+		# 2008/11/15 (fix 2008/11/18)
+		$post =~ s/^(\@[0-9a-zA-Z_]+)/$1 /g;
+		$post =~ s/(.+?)(\@[0-9a-zA-Z_]+)/$1 $2 /g;
+		$post =~ s/\s{2,}\@/ \@/g;
+		$post =~ s/(\@[0-9a-zA-Z_]+)\s{2,}/$1 /g;
 
 		# reply してしまわないように
 		if($post =~ /^\s*\@/)
