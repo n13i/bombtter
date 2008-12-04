@@ -97,7 +97,8 @@ sub fetch_timeline
 			$html = decode('utf8', $res->content);
 		}
 
-		my @entries = $html =~ m{(<tr id="status_\d+" class="hentry.+?</tr>)}sg;
+#		my @entries = $html =~ m{(<tr id="status_\d+" class="hentry.+?</tr>)}sg;
+		my @entries = $html =~ m{(<tr\s.*?id="status_\d+".+?</tr>)}sg;
 		printf "entries: %d\n", $#entries+1;
 
 		foreach my $entry (@entries)
