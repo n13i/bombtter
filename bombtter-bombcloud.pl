@@ -61,10 +61,20 @@ while(my $update = $sth->fetchrow_hashref)
 EOM
 
     my %exploders = ();
-    my $sth_stats = $dbh->prepare('SELECT b.target AS target, b.posted_at AS posted_at, s.status_text AS status_text, s.permalink AS permalink, s.name AS name, s.screen_name AS screen_name, s.is_protected as is_protected FROM statuses s, bombs b WHERE s.status_id = b.status_id AND b.posted_at IS NOT NULL AND b.result = 1 AND LOWER(b.target) = LOWER(?) ORDER BY s.status_id DESC');
-    $sth_stats->execute($target);
+#    my $sth_stats = $dbh->prepare('SELECT b.target AS target, b.posted_at AS posted_at, s.status_text AS status_text, s.permalink AS permalink, s.name AS name, s.screen_name AS screen_name, s.is_protected as is_protected FROM statuses s, bombs b WHERE s.status_id = b.status_id AND b.posted_at IS NOT NULL AND b.result = 1 AND LOWER(b.target) = LOWER(?) ORDER BY s.status_id DESC');
+    my $sth_stats = $dbh->prepare(
+        'SELECT target, posted_at, status_text, permalink, ' .
+            'name, screen_name, is_protected ' .
+        'FROM bombs ' .
+            'LEFT JOIN statuses ON bombs.status_id = statuses.status_id ' .
+        'WHERE bombs.result = 1 AND LOWER(target) = ? ' .
+        'ORDER BY bombs.status_id DESC'
+    );
+    $sth_stats->execute(lc($target));
     while(my $stats = $sth_stats->fetchrow_hashref)
     {
+        use YAML;
+        #print Dump($stats);
         #print FH $stats->{permalink} . "\n";
         if($stats->{is_protected} == 0)
         {
@@ -173,4 +183,3 @@ sub escquote
     $str =~ s/'/\\'/g;
     return $str;
 }
-

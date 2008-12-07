@@ -1,5 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<?php
+define('TWEETS_PER_PAGE', 20);
+?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
@@ -46,9 +49,22 @@ for($i = 0; $i < 5; $i++)
     <div class="entry">
       <ol class="bombcloud">
 <?php
-$n = $bombcount;
-foreach($list as $item)
+$page = $_GET['page'];
+if($page <= 0) { $page = 1; }
+
+$page_last = ceil($bombcount / TWEETS_PER_PAGE);
+
+$start = ($page-1)*TWEETS_PER_PAGE;
+for($i = 0; $i < TWEETS_PER_PAGE; $i++)
 {
+    if($start + $i >= $bombcount)
+    {
+        break;
+    }
+
+    $item = $list[$start + $i];
+    $n = $bombcount - $start - $i;
+
     $screen_name = str_replace('@', '', $item['screen_name']);
     $url_profile = 'http://twitter.com/' . $screen_name;
     $status_text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $item['status_text']);
@@ -64,10 +80,40 @@ foreach($list as $item)
     print '<a href="' . $item['permalink'] . '">Requested</a> by <a href="' . $url_profile . '">' . $username . '</a>, bombed at ' . strftime('%Y/%m/%d %H:%M:%S %z', strtotime($item['posted_at']) + 9 * 3600);
     print '</div>';
     print '</li>';
-    $n--;
 }
 ?>
       </ol>
+    </div>
+    <div class="pagenav">
+<?php
+if($page > 1)
+{
+?>
+      <a href="?page=<?=($page-1)?>">Prev</a>
+<?php
+}
+else
+{
+?>
+      <span>Prev</span>
+<?php
+}
+?>
+      <?=$page?> / <?=$page_last?>
+<?php
+if($page < $page_last)
+{
+?>
+      <a href="?page=<?=($page+1)?>">Next</a>
+<?php
+}
+else
+{
+?>
+      <span>Next</span>
+<?php
+}
+?>
     </div>
   </div>
 
