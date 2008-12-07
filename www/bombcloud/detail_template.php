@@ -46,7 +46,7 @@ for($i = 0; $i < 5; $i++)
 }
 ?>
     </p>
-    <div class="entry">
+    <div class="entry autopagerize_page_element">
       <ol class="bombcloud">
 <?php
 $page = $_GET['page'];
@@ -89,7 +89,7 @@ for($i = 0; $i < TWEETS_PER_PAGE; $i++)
 if($page > 1)
 {
 ?>
-      <a href="?page=<?=($page-1)?>">Prev</a>
+      <a rel="prev" href="?page=<?=($page-1)?>">Prev</a>
 <?php
 }
 else
@@ -104,7 +104,7 @@ else
 if($page < $page_last)
 {
 ?>
-      <a href="?page=<?=($page+1)?>">Next</a>
+      <a rel="next" href="?page=<?=($page+1)?>">Next</a>
 <?php
 }
 else
