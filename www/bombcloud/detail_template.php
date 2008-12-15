@@ -29,8 +29,8 @@ define('TWEETS_PER_PAGE', 20);
   </div>
  
   <div id="contents">
-    <div style="float: right;">
-      <img src="http://labs.m2hq.net/bombtter/img/bombtter.png" width="75" height="75" alt="bombtter"/>
+    <div id="bomb">
+      <div id="bomb_count"><?=$bombcount?></div>
     </div>
     <h1><?=$title?></h1>
     <p>
