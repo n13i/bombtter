@@ -149,11 +149,12 @@ sub bombtter_fetcher
 			logger('fetcher', "sleeping 5 sec ...");
 			sleep(5);
 
-			#$r = fetch_rss();
-			$r = fetch_html($try + 1);
+			$r = fetch_rss();
+			#$r = fetch_html($try + 1);
 			&error if(!defined($r));
 	
-			$remote_earliest_status_id = $r->{earliest_status_id};
+			#$remote_earliest_status_id = $r->{earliest_status_id};
+			$remote_earliest_status_id = -1;
 		}
 		elsif($source == 1)
 		{
