@@ -40,11 +40,17 @@ sub _urlencode
 
 sub fetch_rss
 {
+	#return &_fetch_rss_1x1;
+	return &_fetch_rss_pcod;
+}
+
+sub _fetch_rss_1x1
+{
 	my $uri = 'http://twitter.1x1.jp/rss/search/?keyword='
 			  . &_urlencode($SEARCH_KEYWORD)
 			  . '&text=1';
 
-	print "Twitter search RSS ...\n";
+	print "Twitter search RSS (1x1) ...\n";
 
 	my $content = &_fetch_uri($uri);
 	if(!defined($content))
@@ -54,8 +60,28 @@ sub fetch_rss
 
 	$content = decode('utf8', $content);
 
-	return &_parse_rss($content);
+	return &_parse_rss_1x1($content);
 }
+
+sub _fetch_rss_pcod
+{
+	my $uri = 'http://pcod.no-ip.org/yats/search?query='
+			  . &_urlencode($SEARCH_KEYWORD)
+			  . '&rss';
+
+	print "Twitter search RSS (pcod) ...\n";
+
+	my $content = &_fetch_uri($uri);
+	if(!defined($content))
+	{
+		return undef;
+	}
+
+	$content = decode('utf8', $content);
+
+	return &_parse_rss_pcod($content);
+}
+
 
 sub fetch_html
 {
@@ -114,7 +140,7 @@ sub read_html
 	return &_scrape_html_regexp($buf);
 }
 
-sub _parse_rss
+sub _parse_rss_1x1
 {
 	my $buf = shift || return undef;
 
@@ -170,6 +196,75 @@ sub _parse_rss
 	else
 	{
 		print "RSS error: can't find channel\n";
+		return undef;
+	}
+}
+
+sub _parse_rss_pcod
+{
+	my $buf = shift || return undef;
+
+	if($buf =~ m{<feed(.+?)</feed>}msx)
+	{
+		my $feed = $1;
+
+		my $r_statuses = [];
+		my $earliest_status_id = 99999999999;
+
+		foreach($feed =~ m{<entry>(.+?)</entry>}gmsx)
+		{
+			my ($name, $screen_name, $status_text, $permalink, $status_id);
+
+# <entry>
+#   <title>irca</title>
+#   <link href="http://twitter.com/irca/status/1009393256" rel="alternate"></link>
+#   <updated>2008-11-17T10:48:20Z</updated>
+#   <author><name>irca</name></author>
+#   <id>tag:twitter.com,2008-11-17:/irca/status/1009393256</id>
+#   <summary type="html">@irca : 黒執事の展示会をなめ回すように眺めるなどする</summary>
+# </entry>
+
+			if(m{
+				<link\shref="http\://twitter\.com/[^/]+/status(?:es)?/(\d+)"[^>]*></link>.+?
+				<author><name>(.+?)</name></author>.+?
+				<summary\stype="html">(\@.+?)\s\:\s(.+?)</summary>
+				}msx)
+			{
+				$status_id = $1;
+				$name = $2;
+				$screen_name = $3;
+				$status_text = $4;
+
+				my $screen_name_noat = $screen_name;
+				$screen_name_noat =~ s/^\@//;
+				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
+
+				$status_text = &_normalize_status_text($status_text);
+
+				push(@$r_statuses, {
+					status_id    => $status_id,
+					permalink    => $permalink,
+					name         => $name,
+					screen_name  => $screen_name,
+					status_text  => $status_text,
+					is_protected => 0,  # public RSS
+				});
+
+				if($status_id < $earliest_status_id)
+				{
+					$earliest_status_id = $status_id;
+				}
+			}
+		}
+
+		return {
+			'earliest_status_id' => $earliest_status_id,
+			'statuses' => $r_statuses,
+		};
+	}
+	else
+	{
+		print "RSS error: can't find feed\n";
 		return undef;
 	}
 }
