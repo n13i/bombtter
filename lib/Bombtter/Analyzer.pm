@@ -181,7 +181,8 @@ sub analyze
 		#$object =~ s/^(\@.+)$/$1 /g;
 
 		# 英単語間のスペースを MeCab にばらされないように
-		$object =~ s/\s/%%SPC%%/g;
+		#$object =~ s/\s/%%SPC%%/g;
+		$object = &_escape_space($object);
 
 		# 対 WAVE DASH 問題
 		#$object =~ s/\x{ff5e}/\x{301c}/g;
@@ -237,7 +238,8 @@ sub analyze
 		}
 
 		# %%SPC%% を半角スペースに戻す
-		$object =~ s/%%SPC%%/ /g;
+		#$object =~ s/%%SPC%%/ /g;
+		$object = &_unescape_space($object);
 
 		# 行末のスペースを取っぱらう
 		$object =~ s/\s+$//;
@@ -285,6 +287,22 @@ sub analyze
 		print "  unmatched: $target\n";
 		return undef;
 	}
+}
+
+sub _escape_space
+{
+	my $str = shift;
+	$str =~ s/%/\\%/g;
+	$str =~ s/ / % /g;
+	return $str;
+}
+
+sub _unescape_space
+{
+	my $str = shift;
+	$str =~ s/(?<!\\)%/ /g;
+	$str =~ s/\\%/%/g;
+	return $str;
 }
 
 1;
