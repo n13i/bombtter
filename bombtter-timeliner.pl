@@ -247,7 +247,7 @@ sub login
     }
     if($res->code != 200)
     {
-        print "Login: failed\n";
+        printf "Login: failed (code = %d)\n", $res->code;
         return undef;
     }
 
