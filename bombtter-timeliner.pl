@@ -224,10 +224,10 @@ sub login
 
 	$ua->max_redirect(0);
     my $res = $ua->get('https://twitter.com/home');
-	if($res->code == 200 && !$res->is_redirect)
-	{
-		return $res;
-	}
+#	if($res->code == 200 && !$res->is_redirect)
+#	{
+#		return $res;
+#	}
 
     $ua->get('https://twitter.com/login');
     print "Login: as $username\n";
