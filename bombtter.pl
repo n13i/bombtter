@@ -391,7 +391,8 @@ sub bombtter_publisher
 	logger('publisher', 'checking buzz-words');
 	my $sth_buzzword = $dbh->prepare(
 		'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-		'WHERE target IN (SELECT target FROM buzz WHERE out_at IS NULL) ' .
+		'WHERE LOWER(target) IN ' .
+		'(SELECT LOWER(target) FROM buzz WHERE out_at IS NULL) ' .
 		'AND posted_at IS NULL');
 	$dbh->begin_work;
 	$sth_buzzword->execute;

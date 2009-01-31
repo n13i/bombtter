@@ -34,7 +34,7 @@ my $twit = Net::Twitter->new(
 my $dt_from = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 my $dt_to = $dt_now->clone->strftime('%Y-%m-%d %H:%M:%S');
 
-my $sth = $dbh->prepare('SELECT COUNT(target) as count, target FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY count DESC');
+my $sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
 $sth->execute($dt_from, $dt_to);
 my @shortterm = ();
 while(my $row = $sth->fetchrow_hashref)
@@ -49,7 +49,7 @@ $sth->finish;
 $dt_from = $dt_now->clone->subtract(days => $longterm_days)->strftime('%Y-%m-%d %H:%M:%S');
 $dt_to = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 
-$sth = $dbh->prepare('SELECT COUNT(target) as count, target FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY count DESC');
+$sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
 $sth->execute($dt_from, $dt_to);
 my @longterm = ();
 while(my $row = $sth->fetchrow_hashref)
@@ -92,7 +92,7 @@ foreach my $st (@shortterm)
 # ---------------------------------------------------------------------------
 logger('hot', 'buzzing on db:');
 my @buzz_on_db = ();
-$sth = $dbh->prepare('SELECT id, target FROM buzz WHERE out_at IS NULL');
+$sth = $dbh->prepare('SELECT id, LOWER(target) FROM buzz WHERE out_at IS NULL');
 $sth->execute;
 while(my $row = $sth->fetchrow_hashref)
 {
