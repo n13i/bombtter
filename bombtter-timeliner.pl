@@ -229,11 +229,22 @@ sub login
 #		return $res;
 #	}
 
-    $ua->get('https://twitter.com/login');
+    $res = $ua->get('https://twitter.com/login');
+	my $auth_token = '';
+	if($res->content =~ m{name="authenticity_token"\s+type="hidden"\s+value="(\w{40})"})
+	{
+		$auth_token = $1;
+	}
+	else
+	{
+    	print "Login: can't get authenticity token\n";
+		return undef;
+	}
     print "Login: as $username\n";
     $res = $ua->post('https://twitter.com/sessions' => {
         'session[username_or_email]' => $username,
         'session[password]' => $password,
+		authenticity_token => $auth_token,
         remember_me => 1,
     });
     my $n_redirect = 0;
