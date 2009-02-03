@@ -130,6 +130,12 @@ sub analyze
 		my $object = $1 || $2;
 		my $outro  = $3;
 
+		if($object eq '')
+		{
+			print "  oops, I got empty object: $target\n";
+			return undef;
+		}
+
 		print "  ($object)($outro)\n";
 
 		# check target
