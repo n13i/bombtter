@@ -98,7 +98,8 @@ sub fetch_timeline
 		}
 
 #		my @entries = $html =~ m{(<tr id="status_\d+" class="hentry.+?</tr>)}sg;
-		my @entries = $html =~ m{(<tr\s.*?id="status_\d+".+?</tr>)}sg;
+#		my @entries = $html =~ m{(<tr\s.*?id="status_\d+".+?</tr>)}sg;
+		my @entries = $html =~ m{(<li\s.*?id="status_\d+".+?</li>)}sg;
 		printf "entries: %d\n", $#entries+1;
 
 		foreach my $entry (@entries)
@@ -183,13 +184,13 @@ sub parse_entry
         is_protected => undef,
     };
 
-	if($entry =~ m{<td class="status-body">\s*<div>\s*<strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
+	if($entry =~ m{<span class="status-body"><strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
     {
         $s->{name} = &_normalize_status_text($1);
     }
 
     $s->{is_protected} = 1;
-    if($entry !~ m{</strong>\s*<img alt="Icon_red_lock"}s)
+    if($entry !~ m{<img alt="Icon_red_lock"}s)
     {
         $s->{is_protected} = 0;
     }
@@ -224,10 +225,10 @@ sub login
 
 	$ua->max_redirect(0);
     my $res = $ua->get('https://twitter.com/home');
-#	if($res->code == 200 && !$res->is_redirect)
-#	{
-#		return $res;
-#	}
+	if($res->code == 200 && !$res->is_redirect)
+	{
+		return $res;
+	}
 
     $res = $ua->get('https://twitter.com/login');
 	my $auth_token = '';
