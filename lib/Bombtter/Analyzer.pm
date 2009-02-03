@@ -155,6 +155,7 @@ sub analyze
 			←$|
 			・$|
 			^【急募】|    # @kyubotter 対策(2)
+			^【速報】|    # @sokuhobot 対策
 			^(?:$cadds)$
 			}x)
 		{
