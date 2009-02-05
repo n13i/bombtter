@@ -40,7 +40,7 @@ sub usage
 sub update_location
 {
 	my $location = shift || die;
-	my $r = $twitter->update_location(encode('utf8', $location));
+	my $r = $twitter->update_profile({location => encode('utf8', $location)});
 	print Dump($r);
 }
 
