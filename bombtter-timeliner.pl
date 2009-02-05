@@ -304,7 +304,7 @@ sub autofollow
     
             &debug('start following %s', $_);
             #&send_message('on ' . $_);
-            $twitter->follow($_);
+            $twitter->create_friend($_);
         }
     
         $n = 0;
@@ -314,7 +314,7 @@ sub autofollow
             $n++;
     
             &debug('stop following %s', $_);
-            $twitter->stop_following($_);
+            $twitter->destroy_friend($_);
         }
     };
     warn $@ if $@;
