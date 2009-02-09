@@ -34,7 +34,7 @@ my $twit = Net::Twitter->new(
 my $dt_from = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 my $dt_to = $dt_now->clone->strftime('%Y-%m-%d %H:%M:%S');
 
-my $sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
+my $sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE result = 1 AND ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
 $sth->execute($dt_from, $dt_to);
 my @shortterm = ();
 while(my $row = $sth->fetchrow_hashref)
@@ -49,7 +49,7 @@ $sth->finish;
 $dt_from = $dt_now->clone->subtract(days => $longterm_days)->strftime('%Y-%m-%d %H:%M:%S');
 $dt_to = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 
-$sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
+$sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE result = 1 AND ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
 $sth->execute($dt_from, $dt_to);
 my @longterm = ();
 while(my $row = $sth->fetchrow_hashref)
