@@ -67,7 +67,7 @@ sub _fetch_rss_pcod
 {
 	my $uri = 'http://pcod.no-ip.org/yats/search?query='
 			  . &_urlencode($SEARCH_KEYWORD)
-			  . '&rss';
+			  . '&rss&fast';
 
 	print "Twitter search RSS (pcod) ...\n";
 
