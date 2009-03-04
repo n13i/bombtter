@@ -184,7 +184,7 @@ sub parse_entry
         is_protected => undef,
     };
 
-	if($entry =~ m{<span class="status-body"><strong><a href="https?://twitter.com/[^"]+" title="([^"]+)">}s)
+	if($entry =~ m{<span class="status-body"><strong><a href="https?://twitter.com/[^"]+"\s+.*?title="([^"]+)">}s)
     {
         $s->{name} = &_normalize_status_text($1);
     }
