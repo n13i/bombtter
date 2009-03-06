@@ -234,7 +234,7 @@ sub bombtter_analyzer
 	logger('analyzer', 'running analyzer ' . $Bombtter::Analyzer::revision);
 
 	my $ng_target_expr = join('|', @{$conf->{ng_target_expr}});
-	logger('analyzer', 'NG target: ' . $ng_target_expr);
+	#logger('analyzer', 'NG target: ' . $ng_target_expr);
 
 	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
@@ -343,10 +343,10 @@ sub bombtter_publisher
 	}
 
 	my $ignore_target_expr = join('|', @{$conf->{ignore_target_expr}});
-	logger('publisher', 'IGNORE target: ' . $ignore_target_expr);
+	#logger('publisher', 'IGNORE target: ' . $ignore_target_expr);
 
 	my $count_target_expr = join('|', @{$conf->{count_target_expr}});
-	logger('publisher', 'COUNT target: ' . $count_target_expr);
+	#logger('publisher', 'COUNT target: ' . $count_target_expr);
 
 	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
