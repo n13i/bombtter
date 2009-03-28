@@ -184,7 +184,7 @@ sub bombtter_fetcher
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
 		foreach(@{$r->{statuses}})
 		{
-			if($_->{screen_name} =~ /^$ignore_name$/)
+			if($_->{screen_name} =~ /^($ignore_name)$/)
 			{
 				next;
 			}
@@ -270,7 +270,19 @@ sub bombtter_analyzer
 			next;
 		}
 
-		my $bombed = analyze($target, $mecab_opts);
+		my $bombed;
+
+		# april fool hack (2009/03/28)
+		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+			localtime(time);
+		if(($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool})
+		{
+			$bombed = $update->{screen_name};
+		}
+		else
+		{
+			$bombed = analyze($target, $mecab_opts);
+		}
 
 		my $analyze_result;
 
@@ -483,17 +495,17 @@ sub bombtter_publisher
 		}
 
 		# april mode check
-		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-			localtime(time);
-		if($target !~ /^.{0,3}?\@?$myid\s*/ &&
-		   (($mon+1 == 4 && $mday == 1 && $hour < 12) || $conf->{debug_aprilfool}))
-		{
-			my @tpls = (
-				'爆発的な人気を誇る、%s。',
-			);
-
-			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
-		}
+#		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+#			localtime(time);
+#		if($target !~ /^.{0,3}?\@?$myid\s*/ &&
+#		   (($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool}))
+#		{
+#			my @tpls = (
+#				'爆発的な人気を誇る、%s。',
+#			);
+#
+#			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
+#		}
 
 		# 2008/11/15 (fix 2008/11/18)
 		$post =~ s/^(\@[0-9a-zA-Z_]+)/$1 /g;
