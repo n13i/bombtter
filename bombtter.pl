@@ -423,9 +423,9 @@ sub bombtter_publisher
 	logger('publisher', "bombs in queue: $n_unposted");
 
 	# post queue の数を見て limit を調節する
-	if($n_unposted >= 7)
+	if($n_unposted >= 10)
 	{
-#		$limit = 2;
+		$limit = int($n_unposted/10)+1;
 	}
  
 	my @posts = ();
