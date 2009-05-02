@@ -12,6 +12,7 @@ use DBI;
 use Encode;
 use HTML::Entities;
 use Net::Twitter::Diff;
+use DateTime;
 
 use lib './lib';
 use Bombtter;
@@ -127,7 +128,8 @@ sub fetch_timeline
 	}
 	if(!defined($html))
 	{
-		print "maybe lost some status\n";
+		printf "%s: maybe lost some status\n",
+			DateTime->now(time_zone => '+0900')->strftime('%Y/%m/%d %H:%M:%S');
 	}
 	printf "statuses: %d\n", $#statuses+1;
 	
