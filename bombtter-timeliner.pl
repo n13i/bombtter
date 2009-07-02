@@ -225,18 +225,21 @@ sub login
     my $username = shift || return undef;
     my $password = shift || return undef;
 
-	$ua->max_redirect(0);
+	$ua->requests_redirectable([]);
     my $res = $ua->get('https://twitter.com/home');
 	if($res->code == 200 && !$res->is_redirect)
 	{
+		printf "Login: got response %d. continue...\n", $res->code;
 		return $res;
 	}
 
+	$ua->requests_redirectable(['GET']);
     $res = $ua->get('https://twitter.com/login');
 	my $auth_token = '';
-	if($res->content =~ m{name="authenticity_token"\s+type="hidden"\s+value="(\w{40})"})
+	if($res->content =~ m{name="authenticity_token"\s+[^>]*\s*value="(\w{40})"})
 	{
 		$auth_token = $1;
+    	printf "Login: got authenticity token: %s\n", $auth_token;
 	}
 	else
 	{
