@@ -517,10 +517,10 @@ sub bombtter_publisher
 		$post =~ s/\@/＠/g;
 
 		# reply してしまわないように
-		if($post =~ /^\s*\@/)
-		{
-			$post = '. ' . $post;
-		}
+		#if($post =~ /^\s*\@/)
+		#{
+		#	$post = '. ' . $post;
+		#}
 
 		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid, 'result' => $bomb_result, 'permalink' => $permalink });
 		#print Dump($posts[$#posts]);
