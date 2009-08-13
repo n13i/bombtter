@@ -263,7 +263,7 @@ sub bombtter_analyzer
 		logger('analyzer', "target: " . $target);
 
 		# 爆発させないフラグ
-		if($target =~ /爆発しろ.+-b/i)
+		if($target =~ /爆発しろ.+-b/i || $target =~ /RT\s\@/)
 		{
 			push(@analyze_nobomb_ids, $status_id);
 			logger('analyzer', "result: has no-bomb flag");
