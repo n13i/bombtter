@@ -29,5 +29,6 @@ while(my $update = $sth->fetchrow_hashref)
 	print $target . "\n";
 }
 $sth->finish;
+undef $sth;
 
 $dbh->disconnect;
