@@ -278,7 +278,7 @@ sub _normalize_status_text
 	decode_entities($s);
 
     # @ リンクの除去
-    $s =~ s#\@<a href="/[^"]+">(.+?)</a>#\@$1#g;
+    $s =~ s#\@<a\s+(?:.+?)?href="/[^"]+">(.+?)</a>#\@$1#g;
 
     # <a href="~"> の除去
     $s =~ s#<a\s+(?:.+?)?href="([^"]+)"[^>]*>.+?</a>#$1#g;
