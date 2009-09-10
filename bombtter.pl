@@ -430,8 +430,8 @@ sub bombtter_publisher
 	{
 		my $sth_word = $dbh->prepare(
 			'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-			"WHERE LOWER(target) LIKE '%?%' AND posted_at IS NULL");
-		$sth_word->execute($_);
+			"WHERE LOWER(target) LIKE '%" . $_ . "%' AND posted_at IS NULL");
+		$sth_word->execute;
 		$sth_word->finish; undef $sth_word;
 	}
 	$dbh->commit;
