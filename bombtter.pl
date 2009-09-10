@@ -428,9 +428,13 @@ sub bombtter_publisher
 	$dbh->begin_work;
 	foreach(@buzzwordlist)
 	{
+		# FIXME
+		my $target = $dbh->quote($_);
+		if(!defined($target)) { $target = $_; }
+
 		my $sth_word = $dbh->prepare(
 			'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-			"WHERE LOWER(target) LIKE '%" . $dbh->quote($_) . "%' AND posted_at IS NULL");
+			"WHERE LOWER(target) LIKE '%" . $_ . "%' AND posted_at IS NULL");
 		$sth_word->execute;
 		$sth_word->finish; undef $sth_word;
 	}
