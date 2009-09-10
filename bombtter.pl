@@ -415,7 +415,7 @@ sub bombtter_publisher
 #	undef $sth_buzzword;
 
 	# buzzword リスト取得
-	my @buzzwords = ();
+	my @buzzwordlist = ();
 	$sql = 'SELECT LOWER(target) AS ltarget FROM buzz WHERE out_at IS NULL';
 	my $sth_buzzword = $dbh->prepare($sql);
 	$sth_buzzword->execute;
