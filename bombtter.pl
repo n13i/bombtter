@@ -400,17 +400,41 @@ sub bombtter_publisher
 	undef $sth_buzzuser;
 
 	# buzz ってるものをスルー
+	# 2009/09/10: buzz ってるワードを含むものをスルーするよう変更
+	#             TODO 形態素解析するなど要改善
 	logger('publisher', 'checking buzz-words');
-	my $sth_buzzword = $dbh->prepare(
-		'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-		'WHERE LOWER(target) IN ' .
-		'(SELECT LOWER(target) FROM buzz WHERE out_at IS NULL) ' .
-		'AND posted_at IS NULL');
-	$dbh->begin_work;
+#	my $sth_buzzword = $dbh->prepare(
+#		'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
+#		'WHERE LOWER(target) IN ' .
+#		'(SELECT LOWER(target) FROM buzz WHERE out_at IS NULL) ' .
+#		'AND posted_at IS NULL');
+#	$dbh->begin_work;
+#	$sth_buzzword->execute;
+#	$dbh->commit;
+#	$sth_buzzword->finish;
+#	undef $sth_buzzword;
+
+	# buzzword リスト取得
+	my @buzzwords = ();
+	$sql = 'SELECT LOWER(target) AS ltarget FROM buzz WHERE out_at IS NULL';
+	my $sth_buzzword = $dbh->prepare($sql);
 	$sth_buzzword->execute;
+	while(my $buzzword = $sth_buzzword->fetchrow_hashref)
+	{
+		push(@buzzwordlist, $buzzword->{ltarget});
+	}
+	$sth_buzzword->finish; undef $sth_buzzword;
+
+	$dbh->begin_work;
+	foreach(@buzzwordlist)
+	{
+		my $sth_word = $dbh->prepare(
+			'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
+			"WHERE LOWER(target) LIKE '%?%' AND posted_at IS NULL");
+		$sth_word->execute($_);
+		$sth_word->finish; undef $sth_word;
+	}
 	$dbh->commit;
-	$sth_buzzword->finish;
-	undef $sth_buzzword;
 
 
 	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
