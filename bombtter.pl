@@ -428,6 +428,8 @@ sub bombtter_publisher
 	$dbh->begin_work;
 	foreach(@buzzwordlist)
 	{
+		next if(length($_) < 3);
+
 		# FIXME
 		my $target = $dbh->quote($_);
 		if(!defined($target)) { $target = $_; }
