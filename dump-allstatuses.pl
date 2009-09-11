@@ -13,7 +13,7 @@ my $conf = load_config;
 set_terminal_encoding($conf);
 my $dbh = db_connect($conf);
 
-my $sql = 'SELECT status_text FROM statuses ORDER BY status_id ASC';
+my $sql = 'SELECT status_text FROM statuses ORDER BY status_id DESC';
 if($#ARGV == 0)
 {
     if($ARGV[0] =~ /^\d+$/)
