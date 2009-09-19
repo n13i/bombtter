@@ -544,6 +544,7 @@ sub bombtter_publisher
 		$post =~ s/(\@[0-9a-zA-Z_]+)\s{2,}/$1 /g;
 
 		# 仕様が変わったようなのでさらに置換しておく(2009/07/27)
+		# raw に投げるほうは別途置換 (2009/09/20)
 		$post =~ s/\@/＠/g;
 
 		# reply してしまわないように
@@ -629,12 +630,14 @@ sub bombtter_publisher
 				{
 					$trigger = $1 . '/' . $2;
 				}
+				my $target_san = $target;
+				$target_san =~ s/\@/＠/g;
 				for(my $try = 0; $try < 3; $try++)
 				{
 					eval {
 						$status = $twit2->update(encode('utf8',
 							sprintf('%d,%d|%s|%s',
-								$bomb_result, $count, $trigger, $target)));
+								$bomb_result, $count, $trigger, $target_san)));
 					};
 					logger('publisher', 'update raw: code ' .
 							$twit2->http_code . ' ' . $twit2->http_message);
