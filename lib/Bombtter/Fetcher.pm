@@ -562,7 +562,7 @@ sub _normalize_status_text
 	$s =~ s/<a\shref=\"http:\/\/twitter\.1x1\.jp[^>]+>(.+?)<\/a>/$1/g;
 
 	# <a href="~"> の除去
-	$s =~ s/<a\s+(?:.+?)?href=\"([^\"]+)\"[^>]*>.+?<\/a>/$1/g;
+	$s =~ s/<a\s+(?:.+?)?href=\"[^\"]+\"[^>]*>(.+?)<\/a>/$1/g;
 
 	return $s;
 }
