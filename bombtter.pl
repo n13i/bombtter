@@ -627,13 +627,6 @@ sub bombtter_publisher
 				&error('failed to update');
 			}
 
-			my $profile_name = 'bombtter';
-			if($n_unposted >= 10)
-			{
-				$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
-			}
-			$twit->update_profile({name => encode('utf8', $profile_name)});
-
 			if($conf->{twitter_raw}->{enable})
 			{
 				my $twit2 = Net::Twitter->new(
@@ -661,6 +654,14 @@ sub bombtter_publisher
 		}
 	}
 	$sth->finish;
+
+	my $profile_name = 'bombtter';
+	if($n_unposted >= 10)
+	{
+		$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
+	}
+	#$twit->update_profile({name => encode('utf8', $profile_name)});
+	$twit->update_profile({name => $profile_name});
 
 	logger('publisher', "posted $n_posted bombs.");
 
