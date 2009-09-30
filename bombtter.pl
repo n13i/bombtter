@@ -663,7 +663,7 @@ sub bombtter_publisher
 	#$twit->update_profile({name => encode('utf8', $profile_name)});
 	$twit->update_profile({name => $profile_name});
 
-	logger('publisher', "posted $n_posted bombs.");
+	logger('publisher', "posted $n_posted bombs, $n_unposted unposted.");
 
 	return 1;
 }
