@@ -632,7 +632,7 @@ sub bombtter_publisher
 			{
 				$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
 			}
-			$twit->update_profile(name => encode('utf8', $profile_name));
+			$twit->update_profile({name => encode('utf8', $profile_name)});
 
 			if($conf->{twitter_raw}->{enable})
 			{
