@@ -457,6 +457,11 @@ sub bombtter_publisher
 	{
 		$limit = int($n_unposted/10)+1;
 	}
+	my $max_posts_at_once = $conf->{'max_posts_at_once'} || 1;
+	if($limit > $max_posts_at_once)
+	{
+		$limit = $max_posts_at_once;
+	}
  
 	my @posts = ();
 	$sql =
