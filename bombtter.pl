@@ -360,6 +360,8 @@ sub bombtter_publisher
 	my $count_target_expr = join('|', @{$conf->{count_target_expr}});
 	#logger('publisher', 'COUNT target: ' . $count_target_expr);
 
+	my $self_target_expr = join('|', @{$conf->{self_target_expr}});
+
 	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
@@ -486,9 +488,9 @@ sub bombtter_publisher
 
 		my $result;
 
-		my $myid = $conf->{twitter}->{username};
+		#my $myid = $conf->{twitter}->{username};
 		# ターゲットチェック
-		if($target =~ /^.*?\@?$myid\s*$/)
+		if($target =~ /$self_target_expr/i)
 		{
 			# 自爆
 
