@@ -665,6 +665,10 @@ sub bombtter_publisher
 
 	logger('publisher', "posted $n_posted bombs, $n_unposted unposted.");
 
+	my $ratelimit = $twit->rate_limit_status;
+	logger('publisher', sprintf('Twitter API: %s/%s',
+		$ratelimit->{remaining_hits}, $ratelimit->{hourly_limit}));
+
 	return 1;
 }
 
