@@ -624,7 +624,7 @@ sub bombtter_publisher
 			}
 			else
 			{
-				&error('failed to update');
+				&error('failed to update: ' . $twit->get_error);
 			}
 
 			if($conf->{twitter_raw}->{enable})
