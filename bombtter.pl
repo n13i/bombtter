@@ -661,7 +661,7 @@ sub bombtter_publisher
 		$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
 	}
 	#$twit->update_profile({name => encode('utf8', $profile_name)});
-	$twit->update_profile({name => $profile_name});
+	#$twit->update_profile({name => $profile_name});
 
 	logger('publisher', "posted $n_posted bombs, $n_unposted unposted.");
 
