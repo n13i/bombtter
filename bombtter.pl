@@ -674,15 +674,14 @@ sub bombtter_publisher
 		my $twit2 = Net::Twitter->new(
 			username => $conf->{twitter_status}->{username},
 			password => $conf->{twitter_status}->{password});
-			eval {
-				if($n_unposted >= 10)
-				{
-					$status = $twit2->update(encode('utf8',
-						sprintf('【遅延】混雑度 %d',
-							int($n_unposted/10))));
-				}
-			};
-		}
+		eval {
+			if($n_unposted >= 10)
+			{
+				my $status = $twit2->update(encode('utf8',
+					sprintf('【遅延】混雑度 %d',
+						int($n_unposted/10))));
+			}
+		};
 	}
 
 	return 1;
