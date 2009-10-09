@@ -42,6 +42,14 @@ sub update_location
 	my $location = shift || die;
 	my $r = $twitter->update_profile({location => encode('utf8', $location)});
 	print Dump($r);
+
+	my $twit = Net::Twitter->new(
+		username => $conf->{twitter_status}->{username},
+		password => $conf->{twitter_status}->{password},
+	);
+	eval {
+		$twit->update(encode('utf8', sprintf('【更新】%s', $location)));
+	};
 }
 
 sub rate_limit_status
