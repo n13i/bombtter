@@ -655,11 +655,11 @@ sub bombtter_publisher
 	}
 	$sth->finish;
 
-	my $profile_name = 'bombtter';
-	if($n_unposted >= 10)
-	{
-		$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
-	}
+#	my $profile_name = 'bombtter';
+#	if($n_unposted >= 10)
+#	{
+#		$profile_name .= sprintf(' (忙しいLv%d)', int($n_unposted/10));
+#	}
 	#$twit->update_profile({name => encode('utf8', $profile_name)});
 	#$twit->update_profile({name => $profile_name});
 
@@ -668,6 +668,22 @@ sub bombtter_publisher
 	my $ratelimit = $twit->rate_limit_status;
 	logger('publisher', sprintf('Twitter API: %s/%s',
 		$ratelimit->{remaining_hits}, $ratelimit->{hourly_limit}));
+
+	if($conf->{twitter_status}->{enable})
+	{
+		my $twit2 = Net::Twitter->new(
+			username => $conf->{twitter_status}->{username},
+			password => $conf->{twitter_status}->{password});
+			eval {
+				if($n_unposted >= 10)
+				{
+					$status = $twit2->update(encode('utf8',
+						sprintf('【遅延】混雑度 %d',
+							int($n_unposted/10))));
+				}
+			};
+		}
+	}
 
 	return 1;
 }
