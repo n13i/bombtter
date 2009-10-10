@@ -589,6 +589,9 @@ sub bombtter_publisher
 			$lb_target = 'long';
 		}
 
+		logger('publish', sprintf('using account %s for %s target',
+			$conf->{twitter}->{$lb_target}->{username}, $lb_target));
+
 		my $twit_post = Net::Twitter->new(
 				username => $conf->{twitter}->{$lb_target}->{username},
 				password => $conf->{twitter}->{$lb_target}->{password});
