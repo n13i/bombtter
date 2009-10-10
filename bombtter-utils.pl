@@ -48,7 +48,8 @@ sub update_location
 		password => $conf->{twitter_status}->{password},
 	);
 	eval {
-		$twit->update(encode('utf8', sprintf('【更新】%s', $location)));
+		my $s = $twit->update(encode('utf8', sprintf('【更新】%s', $location)));
+		print Dump($s);
 	};
 }
 
