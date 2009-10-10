@@ -50,6 +50,7 @@ sub update_location
 	eval {
 		my $s = $twit->update(encode('utf8', sprintf('【更新】%s', $location)));
 		print Dump($s);
+		print Dump($twit->get_error);
 	};
 }
 
