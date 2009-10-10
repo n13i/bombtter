@@ -566,7 +566,6 @@ sub bombtter_publisher
 	$sth->finish;
 
 
-
 	my $twit = Net::Twitter->new(
 			username => $conf->{twitter}->{username},
 			password => $conf->{twitter}->{password});
@@ -582,6 +581,17 @@ sub bombtter_publisher
 		my $bomb_result = $_->{result};
 		my $permalink = $_->{permalink};
 		my $count = 1;
+
+		# 負荷分散
+		my $lb_target = 'normal';
+		if(length($target) >= 15)
+		{
+			$lb_target = 'long';
+		}
+
+		my $twit_post = Net::Twitter->new(
+				username => $conf->{twitter}->{$lb_target}->{username},
+				password => $conf->{twitter}->{$lb_target}->{password});
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
@@ -611,20 +621,20 @@ sub bombtter_publisher
 		my $status = undef;
 		if($enable_posting)
 		{
-			eval { $status = $twit->update(encode('utf8', $post)); };
+			eval { $status = $twit_post->update(encode('utf8', $post)); };
 
 			logger('publisher', 'update main: code ' .
-								$twit->http_code . ' ' . $twit->http_message);
+								$twit_post->http_code . ' ' . $twit_post->http_message);
 			logger('publisher', Dump($status));
 
-			if($twit->http_code == 200)
+			if($twit_post->http_code == 200)
 			{
 				$sth->execute($bomb_result, $_->{'id'});
 				$n_posted++;
 			}
 			else
 			{
-				&error('failed to update: ' . Dump($twit->get_error));
+				&error('failed to update: ' . Dump($twit_post->get_error));
 			}
 
 			if($conf->{twitter_raw}->{enable})
