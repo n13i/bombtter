@@ -584,7 +584,7 @@ sub bombtter_publisher
 
 		# 負荷分散
 		my $lb_target = 'normal';
-		if(length($target) >= 15)
+		if(length($target) >= 10)
 		{
 			$lb_target = 'long';
 		}
