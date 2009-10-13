@@ -25,8 +25,8 @@ my $dt_now = DateTime->now(time_zone => '+0000');
 #$dt_now->subtract(hours => 28);
 
 my $twit = Net::Twitter->new(
-		username => $conf->{twitter}->{username},
-		password => $conf->{twitter}->{password});
+		username => $conf->{twitter}->{normal}->{username},
+		password => $conf->{twitter}->{normal}->{password});
 
 # ---------------------------------------------------------------------------
 # 短期
@@ -124,7 +124,7 @@ foreach my $b (@buzz)
         logger('hot', '  ' . $b->{target});
         if($conf->{enable_hotbomb})
         {
-    		if($conf->{twitter}->{enable})
+    		if($conf->{twitter}->{normal}->{enable})
     		{
                 my $status;
                 eval {

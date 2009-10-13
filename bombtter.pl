@@ -285,7 +285,7 @@ sub bombtter_analyzer
 		}
 
 		$bombed_normalized = $bombed;
-		$bombed_normalized = tr/Ａ-Ｚａ-ｚｧ-ﾝ/A-Za-zァ-ン/;
+		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚｧ-ﾝ/A-Za-zァ-ン/;
 
 		# 緊急度とカテゴリを決定
 		my $urgency = 0;
