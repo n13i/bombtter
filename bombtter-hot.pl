@@ -6,6 +6,7 @@ use utf8;
 use DateTime;
 use Net::Twitter;
 use Encode;
+use YAML;
 
 use lib './lib';
 use Bombtter;
@@ -27,6 +28,26 @@ my $dt_now = DateTime->now(time_zone => '+0000');
 my $twit = Net::Twitter->new(
 		username => $conf->{twitter}->{normal}->{username},
 		password => $conf->{twitter}->{normal}->{password});
+
+# ---------------------------------------------------------------------------
+# 最新の処理済み post の日時を取得
+# ---------------------------------------------------------------------------
+my $latest_bombed = $dbh->selectrow_hashref(
+    'SELECT ctime FROM bombs WHERE posted_at IS NOT NULL '.
+    'ORDER BY ctime DESC'
+);
+if($latest_bombed->{ctime} =~ /(\d{4})\-(\d{2})\-(\d{2})\s(\d{2})\:(\d{2})\:(\d{2})/)
+{
+    $dt_now = DateTime->new(
+        year => $1,
+        month => $2,
+        day => $3,
+        hour => $4,
+        minute => $5,
+        second => $6,
+        time_zone => '+0000',
+    );
+}
 
 # ---------------------------------------------------------------------------
 # 短期
