@@ -93,7 +93,11 @@ if($mode eq 'fetch' || $mode eq 'both')
 }
 if($mode eq 'post' || $mode eq 'both')
 {
-	&bombtter_publisher($conf, $dbh, $post_source);
+	my @categories = (0, 1);
+	foreach(@categories)
+	{
+		&bombtter_publisher($conf, $dbh, $post_source, $_);
+	}
 }
 
 $dbh->disconnect;
@@ -371,12 +375,14 @@ sub bombtter_publisher
 	my $dbh = shift || return undef;
 
 	my $limit_source = shift || -1;
+	my $category = shift || 0;
 
 	logger('publisher', 'running publisher');
 	if($limit_source >= 0)
 	{
 		logger('publisher', 'limit source: ' . $source_name[$limit_source]);
 	}
+	logger('publisher', 'category: ' . $category);
 
 	my $ignore_target_expr = join('|', @{$conf->{ignore_target_expr}});
 	#logger('publisher', 'IGNORE target: ' . $ignore_target_expr);
@@ -386,6 +392,7 @@ sub bombtter_publisher
 
 	my $self_target_expr = join('|', @{$conf->{self_target_expr}});
 
+	# FIXME
 	my $enable_posting = $conf->{'twitter'}->{'enable'} || 0;
 	my $limit = $conf->{'posts_at_once'} || 1;
 
@@ -474,6 +481,7 @@ sub bombtter_publisher
 	{
 		$sql .= ' AND source = ' . $limit_source;
 	}
+
 	my $hashref = $dbh->selectrow_hashref($sql);
 	my $n_unposted = $hashref->{'count'};
 	logger('publisher', "bombs in queue: $n_unposted");
@@ -491,7 +499,7 @@ sub bombtter_publisher
  
 	my @posts = ();
 	$sql =
-		'SELECT rowid, status_id, target, '.
+		'SELECT rowid, status_id, target, category, '.
 		'(SELECT s.permalink FROM statuses s ' .
 		'WHERE s.status_id = b.status_id) AS permalink ' .
 		'FROM bombs b WHERE posted_at IS NULL ';
@@ -499,6 +507,7 @@ sub bombtter_publisher
 	{
 		$sql .= 'AND source = ' . $limit_source . ' ';
 	}
+	$sql .= 'AND category = ' . $category;
 	$sql .= 'ORDER BY urgency DESC, status_id ASC LIMIT ?';
 	my $sth = $dbh->prepare($sql);
 
@@ -508,6 +517,7 @@ sub bombtter_publisher
 		my $status_id = $update->{status_id};
 		my $rowid = $update->{rowid};
 		my $target = $update->{target};
+		my $category = $update->{category};
 		my $permalink = $update->{permalink};
 
 		# post 内容の構築
@@ -586,7 +596,15 @@ sub bombtter_publisher
 		#	$post = '. ' . $post;
 		#}
 
-		push(@posts, { 'target' => $target, 'id' => $status_id, 'post' => $post, 'rowid' => $rowid, 'result' => $bomb_result, 'permalink' => $permalink });
+		push(@posts, {
+			target => $target,
+			category => $category,
+			id => $status_id,
+			post => $post,
+			rowid => $rowid,
+			result => $bomb_result,
+			permalink => $permalink
+		});
 		#print Dump($posts[$#posts]);
 	}
 	$sth->finish;
@@ -611,6 +629,11 @@ sub bombtter_publisher
 		# 負荷分散
 		my $lb_target = 'normal';
 		if(length($target) >= 10)
+		{
+			$lb_target = 'long';
+		}
+
+		if($_->{category} == 1)
 		{
 			$lb_target = 'long';
 		}
