@@ -251,14 +251,13 @@ sub bombtter_analyzer
 	}
 
 	my $sth_insert = $dbh->prepare(
-		'INSERT OR IGNORE INTO bombs (status_id, target, source) VALUES (?, ?, ?)');
+		'INSERT OR IGNORE INTO bombs (status_id, target, target_normalized, source, urgency, category) VALUES (?, ?, ?, ?, ?, ?)');
 	$dbh->begin_work;
 	while(my $update = $sth->fetchrow_hashref)
 	{
-		#push(@targets, $update->{'status'});
-		my $status_id = $update->{'status_id'};
-		my $target = $update->{'status_text'};
-		my $source = $update->{'source'};
+		my $status_id = $update->{status_id};
+		my $target = $update->{status_text};
+		my $source = $update->{source};
 
 		logger('analyzer', "target: " . $target);
 
@@ -271,6 +270,7 @@ sub bombtter_analyzer
 		}
 
 		my $bombed;
+		my $bombed_normalized;
 
 		# april fool hack (2009/03/28)
 		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
@@ -284,7 +284,24 @@ sub bombtter_analyzer
 			$bombed = analyze($target, $mecab_opts);
 		}
 
-		my $analyze_result;
+		$bombed_normalized = $bombed;
+		$bombed_normalized = tr/Ａ-Ｚａ-ｚｧ-ﾝ/A-Za-zァ-ン/;
+
+		# 緊急度とカテゴリを決定
+		my $urgency = 0;
+		my $category = 0;
+
+		if(length($bombed) >= 10)
+		{
+			$category = 1; # long
+		}
+
+		if($bombed =~ /DJソルト/)
+		{
+			$urgency++;
+		}
+
+		#my $analyze_result;
 
 		if(defined($bombed))
 		{
@@ -297,7 +314,14 @@ sub bombtter_analyzer
 			else
 			{
 				push(@analyze_ok_ids, $status_id);
-				$sth_insert->execute($status_id, $bombed, $source);
+				$sth_insert->execute(
+					$status_id,
+					$bombed,
+					$bombed_normalized,
+					$source,
+					$urgency,
+					$category
+				);
 				logger('analyzer', "result: " . $bombed);
 			}
 		}
@@ -467,13 +491,15 @@ sub bombtter_publisher
  
 	my @posts = ();
 	$sql =
-		'SELECT rowid, status_id, target, (SELECT s.permalink FROM statuses s WHERE s.status_id = b.status_id) AS permalink ' .
+		'SELECT rowid, status_id, target, '.
+		'(SELECT s.permalink FROM statuses s ' .
+		'WHERE s.status_id = b.status_id) AS permalink ' .
 		'FROM bombs b WHERE posted_at IS NULL ';
 	if($limit_source >= 0)
 	{
 		$sql .= 'AND source = ' . $limit_source . ' ';
 	}
-	$sql .= 'ORDER BY status_id ASC LIMIT ?';
+	$sql .= 'ORDER BY urgency DESC, status_id ASC LIMIT ?';
 	my $sth = $dbh->prepare($sql);
 
 	$sth->execute($limit);
