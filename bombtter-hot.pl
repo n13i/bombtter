@@ -34,7 +34,7 @@ my $twit = Net::Twitter->new(
 # ---------------------------------------------------------------------------
 my $latest_bombed = $dbh->selectrow_hashref(
     'SELECT ctime FROM bombs WHERE posted_at IS NOT NULL '.
-    'ORDER BY ctime DESC'
+    'ORDER BY ctime DESC LIMIT 1'
 );
 if($latest_bombed->{ctime} =~ /(\d{4})\-(\d{2})\-(\d{2})\s(\d{2})\:(\d{2})\:(\d{2})/)
 {
@@ -53,7 +53,7 @@ if($latest_bombed->{ctime} =~ /(\d{4})\-(\d{2})\-(\d{2})\s(\d{2})\:(\d{2})\:(\d{
 # 短期
 # ---------------------------------------------------------------------------
 my $dt_from = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
-my $dt_to = $dt_now->clone->strftime('%Y-%m-%d %H:%M:%S');
+my $dt_to = $dt_now->clone->add(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 
 my $sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE result >= 0 AND ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
 $sth->execute($dt_from, $dt_to);
