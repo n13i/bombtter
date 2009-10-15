@@ -487,7 +487,7 @@ sub bombtter_publisher
 	# post queue の数を見て limit を調節する
 	if($n_unposted >= 10)
 	{
-		$limit = int($n_unposted/5)*2+1;
+		$limit = int($n_unposted/5)*5+1;
 	}
 	my $max_posts_at_once = $conf->{'max_posts_at_once'} || 1;
 	if($limit > $max_posts_at_once)
