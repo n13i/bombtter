@@ -300,7 +300,7 @@ sub bombtter_analyzer
 			$category = 1; # long
 		}
 
-		if($bombed =~ /DJソルト/)
+		if($bombed_normalized =~ /DJソルト/)
 		{
 			$urgency++;
 		}
