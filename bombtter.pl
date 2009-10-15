@@ -706,6 +706,7 @@ sub bombtter_publisher
 		# 可変部分以外の文字数を引いておく
 		$post_length -= (length($post_prefix) + length($post_suffix));
 
+		my @target_keys = keys %targets;
 		foreach my $t (keys %targets)
 		{
 			my $p = $targets{$t}->{data};
@@ -732,22 +733,37 @@ sub bombtter_publisher
 			$add_content .= $p->{target};
 
 			# 回数表示
+			my $count_str = '';
 			if($targets{$t}->{count_now} > 1)
 			{
-				$add_content .= sprintf '(%d発', $targets{$t}->{count_now};
+				$count_str .= sprintf '(%d発',
+					$targets{$t}->{count_now};
 				if($targets{$t}->{count_target} == 1)
 				{
-					$add_content .= sprintf ',%d回目',
+					$count_str .= sprintf ',%d回目',
 						$targets{$t}->{count_total};
 				}
-				$add_content .= ')';
+				$count_str .= ')';
 			}
 			elsif($targets{$t}->{count_target} == 1)
 			{
-				$add_content .= sprintf '(%d回目)',
+				$count_str .= sprintf '(%d回目)',
 					$targets{$t}->{count_total};
 			}
 
+			if($#target_keys >= 1)
+			{
+				# 複数の場合，ターゲット名の後ろに追加
+				$add_content .= $count_str;
+			}
+			else
+			{
+				# 単独の場合，suffix の後ろに追加
+				$post_suffix .= $count_str;
+				$post_length -= length($count_str);
+			}
+
+			# さらにターゲットを追加できるかチェック
 			if($post_length - length($add_content) < 0)
 			{
 				# これ以上追加できない
