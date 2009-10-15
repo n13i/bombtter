@@ -14,19 +14,18 @@ set_terminal_encoding($conf);
 
 my $dbh = db_connect($conf);
 
-my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
-my $n_unposted = $hashref->{'count'};
-print "Unposted bombs: $n_unposted\n";
+#my $hashref = $dbh->selectrow_hashref('SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL');
+#my $n_unposted = $hashref->{'count'};
+#print "Unposted bombs: $n_unposted\n";
 
 my @posts = ();
 my $sth = $dbh->prepare('SELECT * FROM bombs WHERE posted_at IS NULL ORDER BY status_id ASC');
 $sth->execute();
 while(my $update = $sth->fetchrow_hashref)
 {
-	my $status_id = $update->{'status_id'};
-	my $target = $update->{'target'};
-
-	print $target . "\n";
+	printf "C:%d U:%d [%s] %s\n",
+        $update->{category}, $update->{urgency},
+        $update->{status_id}, $update->{target};
 }
 $sth->finish;
 undef $sth;
