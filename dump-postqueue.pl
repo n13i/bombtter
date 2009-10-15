@@ -31,4 +31,17 @@ while(my $update = $sth->fetchrow_hashref)
 $sth->finish;
 undef $sth;
 
+$sth = $dbh->prepare(
+    'SELECT category, COUNT(*) as count FROM bombs WHERE posted_at IS NULL ' .
+    'GROUP BY category'
+);
+$sth->execute();
+while(my $update = $sth->fetchrow_hashref)
+{
+	printf "category %d: %d unposted\n", $update->{category}, $update->{count};
+}
+$sth->finish;
+undef $sth;
+
+
 $dbh->disconnect;
