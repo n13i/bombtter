@@ -13,6 +13,9 @@ use Encode;
 use Jcode;
 use YAML;  # for YAML::Dump
 use DateTime;
+# for buzztter RSS
+use XML::RSS;
+use LWP::Simple;
 
 use lib './lib';
 use Bombtter;
@@ -107,6 +110,9 @@ $dbh->disconnect;
 exit;
 
 
+# ============================================================================
+# Fetcher
+# ============================================================================
 # Twitter 検索をスクレイピングしてデータベースに格納する
 # 2008/03/17 naoh
 sub bombtter_fetcher
@@ -230,6 +236,9 @@ sub bombtter_fetcher
 }
 
 
+# ============================================================================
+# Analyzer
+# ============================================================================
 # 2008/03/17
 sub bombtter_analyzer
 {
@@ -240,7 +249,22 @@ sub bombtter_analyzer
 
 	my $ng_target_expr = join('|', @{$conf->{ng_target_expr}});
 	#logger('analyzer', 'NG target: ' . $ng_target_expr);
-	my $urgent_target_expr = join('|', @{$conf->{urgent_target_expr}});
+	my @urgent_keywords = @{$conf->{urgent_keywords}};
+
+	# 緊急度決定用に buzztter の RSS を取得
+	eval {
+		my $buf = get('http://buzztter.com/ja/rss');
+		if(defined($buf))
+		{
+			my $rss = new XML::RSS;
+			$rss->parse($buf);
+			foreach(@{$rss->{items}})
+			{
+				push(@urgent_keywords, $_->{title});
+			}
+		}
+	};
+	logger('analyzer', 'urgent keywords: ' . join(', ', @urgent_keywords));
 
 	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
@@ -303,9 +327,12 @@ sub bombtter_analyzer
 			$category = 1; # long
 		}
 
-		if($bombed_normalized =~ /$urgent_target_expr/i)
+		foreach my $expr (@urgent_keywords)
 		{
-			$urgency++;
+			if($bombed_normalized =~ /$expr/i)
+			{
+				$urgency++;
+			}
 		}
 
 		#my $analyze_result;
@@ -329,7 +356,8 @@ sub bombtter_analyzer
 					$urgency,
 					$category
 				);
-				logger('analyzer', "result: " . $bombed);
+				logger('analyzer', sprintf("result: [U:%d C:%d] %s",
+					$urgency, $category, $bombed));
 			}
 		}
 		else
@@ -372,6 +400,9 @@ sub bombtter_analyzer
 	return 1;
 }
 
+# ============================================================================
+# Publisher
+# ============================================================================
 sub bombtter_publisher
 {
 	my $conf = shift || return undef;
