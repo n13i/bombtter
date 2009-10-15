@@ -291,7 +291,7 @@ sub bombtter_analyzer
 		}
 
 		$bombed_normalized = decode('utf8', Jcode->new(encode('utf8', $bombed))->h2z->utf8);
-		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ/A-Za-z/;
+		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
 
 		# 緊急度とカテゴリを決定
 		my $urgency = 0;
