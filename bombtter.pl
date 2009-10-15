@@ -298,7 +298,7 @@ sub bombtter_analyzer
 		my $urgency = 0;
 		my $category = 0;
 
-		if(length($bombed) >= 8)
+		if(length($bombed) >= $conf->{clusterizer}->{longpost_thresh})
 		{
 			$category = 1; # long
 		}
