@@ -485,9 +485,9 @@ sub bombtter_publisher
 	logger('publisher', "bombs in queue: $n_unposted");
 
 	# post queue の数を見て limit を調節する
-	if($n_unposted >= 10)
+	if($n_unposted >= 5)
 	{
-		$limit = int($n_unposted/10)+1;
+		$limit = int($n_unposted/5)+1;
 	}
 	my $max_posts_at_once = $conf->{'max_posts_at_once'} || 1;
 	if($limit > $max_posts_at_once)
