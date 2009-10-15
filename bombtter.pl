@@ -314,31 +314,31 @@ sub bombtter_analyzer
 			$bombed = analyze($target, $mecab_opts);
 		}
 
-		$bombed_normalized = decode('utf8',
-			Jcode->new(encode('utf8', $bombed))->h2z->utf8);
-		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
-
-		# 緊急度とカテゴリを決定
-		my $urgency = 0;
-		my $category = 0;
-
-		if(length($bombed) >= $conf->{clusterizer}->{longpost_thresh})
-		{
-			$category = 1; # long
-		}
-
-		foreach my $expr (@urgent_keywords)
-		{
-			if($bombed_normalized =~ /$expr/i)
-			{
-				$urgency++;
-			}
-		}
-
 		#my $analyze_result;
 
 		if(defined($bombed))
 		{
+			$bombed_normalized = decode('utf8',
+				Jcode->new(encode('utf8', $bombed))->h2z->utf8);
+			$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
+	
+			# 緊急度とカテゴリを決定
+			my $urgency = 0;
+			my $category = 0;
+	
+			if(length($bombed) >= $conf->{clusterizer}->{longpost_thresh})
+			{
+				$category = 1; # long
+			}
+	
+			foreach my $expr (@urgent_keywords)
+			{
+				if($bombed_normalized =~ /$expr/i)
+				{
+					$urgency++;
+				}
+			}
+
 			if($bombed =~ /$ng_target_expr/i)
 			{
 				# political through
