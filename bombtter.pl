@@ -240,6 +240,7 @@ sub bombtter_analyzer
 
 	my $ng_target_expr = join('|', @{$conf->{ng_target_expr}});
 	#logger('analyzer', 'NG target: ' . $ng_target_expr);
+	my $urgent_target_expr = join('|', @{$conf->{urgent_target_expr}});
 
 	my $sth = $dbh->prepare('SELECT * FROM statuses WHERE analyzed IS NULL ORDER BY status_id DESC');
 	$sth->execute();
@@ -301,7 +302,7 @@ sub bombtter_analyzer
 			$category = 1; # long
 		}
 
-		if($bombed_normalized =~ /ソルト/)
+		if($bombed_normalized =~ /$urgent_target_expr/i)
 		{
 			$urgency++;
 		}
