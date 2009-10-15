@@ -701,9 +701,15 @@ sub bombtter_publisher
 			# 回数表示
 			if($targets{$t}->{count_now} > 1)
 			{
-				$add_content .= sprintf 'が%d発', $targets{$t}->{count_now};
+				$add_content .= sprintf '(%d発', $targets{$t}->{count_now};
+				if($targets{$t}->{count_target} == 1)
+				{
+					$add_content .= sprintf ',%d回目',
+						$targets{$t}->{count_total};
+				}
+				$add_content .= ')';
 			}
-			if($targets{$t}->{count_target} == 1)
+			elsif($targets{$t}->{count_target} == 1)
 			{
 				$add_content .= sprintf '(%d回目)',
 					$targets{$t}->{count_total};
