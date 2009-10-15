@@ -10,6 +10,7 @@ use utf8;
 
 use Net::Twitter;
 use Encode;
+use Jcode;
 use YAML;  # for YAML::Dump
 use DateTime;
 
@@ -288,8 +289,8 @@ sub bombtter_analyzer
 			$bombed = analyze($target, $mecab_opts);
 		}
 
-		$bombed_normalized = $bombed;
-		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚｧ-ﾝ/A-Za-zァ-ン/;
+		$bombed_normalized = decode('utf8', Jcode->new(encode('utf8', $bombed))->h2z->utf8);
+		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ/A-Za-z/;
 
 		# 緊急度とカテゴリを決定
 		my $urgency = 0;
@@ -300,7 +301,7 @@ sub bombtter_analyzer
 			$category = 1; # long
 		}
 
-		if($bombed_normalized =~ /DJソルト/)
+		if($bombed_normalized =~ /ソルト/)
 		{
 			$urgency++;
 		}
