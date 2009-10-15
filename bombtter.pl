@@ -495,7 +495,7 @@ sub bombtter_publisher
 		$limit = $max_posts_at_once;
 	}
  
-	if($multipostmode != 0 || $category != 0)
+	if($multipostmode != 1 || $category != 0)
 	{
 		$limit = 1;
 	}
