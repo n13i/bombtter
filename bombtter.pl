@@ -290,14 +290,15 @@ sub bombtter_analyzer
 			$bombed = analyze($target, $mecab_opts);
 		}
 
-		$bombed_normalized = decode('utf8', Jcode->new(encode('utf8', $bombed))->h2z->utf8);
+		$bombed_normalized = decode('utf8',
+			Jcode->new(encode('utf8', $bombed))->h2z->utf8);
 		$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
 
 		# 緊急度とカテゴリを決定
 		my $urgency = 0;
 		my $category = 0;
 
-		if(length($bombed) >= 10)
+		if(length($bombed) >= 8)
 		{
 			$category = 1; # long
 		}
@@ -438,16 +439,6 @@ sub bombtter_publisher
 	# 2009/09/10: buzz ってるワードを含むものをスルーするよう変更
 	#             TODO 形態素解析するなど要改善
 	logger('publisher', 'checking buzz-words');
-#	my $sth_buzzword = $dbh->prepare(
-#		'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-#		'WHERE LOWER(target) IN ' .
-#		'(SELECT LOWER(target) FROM buzz WHERE out_at IS NULL) ' .
-#		'AND posted_at IS NULL');
-#	$dbh->begin_work;
-#	$sth_buzzword->execute;
-#	$dbh->commit;
-#	$sth_buzzword->finish;
-#	undef $sth_buzzword;
 
 	# buzzword リスト取得
 	my @buzzwordlist = ();
@@ -478,6 +469,11 @@ sub bombtter_publisher
 	$dbh->commit;
 
 
+	# ========================================================================
+	# post target の選択
+
+	my $multipostmode = 1;
+
 	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
 	if($limit_source >= 0)
 	{
@@ -499,6 +495,11 @@ sub bombtter_publisher
 		$limit = $max_posts_at_once;
 	}
  
+	if($multipostmode == 1 && $category == 0)
+	{
+		$limit = 20;
+	}
+
 	my @posts = ();
 	$sql =
 		'SELECT rowid, status_id, target, category, '.
@@ -526,29 +527,14 @@ sub bombtter_publisher
 
 		my $result;
 
-		#my $myid = $conf->{twitter}->{username};
 		# ターゲットチェック
+		my $selfbomb = 0;
 		if($target =~ /$self_target_expr/i)
 		{
 			# 自爆
 
-#			# 身代わりに何か適当なものを爆発させる
-#			my $hashref = $dbh->selectrow_hashref('SELECT target FROM bombs WHERE posted_at IS NOT NULL AND result = 1 ORDER BY RANDOM() LIMIT 1');
-#			my $subst = $hashref->{'target'};
-#
-#			if(!defined($subst))
-#			{
-#				logger('publisher', "WARNING: subst is undef");
-#			}
-#
-#			if(int(rand(100)) < 70 || !defined($subst))
-#			{
-				$result = 'が自爆しました。';
-#			}
-#			else
-#			{
-#				$result = 'の身代わりとして' . $subst . 'が爆発しました。';
-#			}
+			$result = 'が自爆しました。';
+			$selfbomb = 1;
 		}
 		else
 		{
@@ -569,19 +555,6 @@ sub bombtter_publisher
 			$bomb_result = 1;
 		}
 
-		# april mode check
-#		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-#			localtime(time);
-#		if($target !~ /^.{0,3}?\@?$myid\s*/ &&
-#		   (($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool}))
-#		{
-#			my @tpls = (
-#				'爆発的な人気を誇る、%s。',
-#			);
-#
-#			$post = sprintf($tpls[int(rand($#tpls+1))], $target);
-#		}
-
 		# 2008/11/15 (fix 2008/11/18)
 		$post =~ s/^(\@[0-9a-zA-Z_]+)/$1 /g;
 		$post =~ s/(.+?)(\@[0-9a-zA-Z_]+)/$1 $2 /g;
@@ -592,12 +565,6 @@ sub bombtter_publisher
 		# raw に投げるほうは別途置換 (2009/09/20)
 		$post =~ s/\@/＠/g;
 
-		# reply してしまわないように
-		#if($post =~ /^\s*\@/)
-		#{
-		#	$post = '. ' . $post;
-		#}
-
 		push(@posts, {
 			target => $target,
 			category => $category,
@@ -605,7 +572,9 @@ sub bombtter_publisher
 			post => $post,
 			rowid => $rowid,
 			result => $bomb_result,
-			permalink => $permalink
+			permalink => $permalink,
+			selfbomb => $selfbomb,
+			proceeded => 0,
 		});
 		#print Dump($posts[$#posts]);
 	}
@@ -619,6 +588,220 @@ sub bombtter_publisher
 	$sth = $dbh->prepare(
 			'UPDATE bombs SET posted_at = CURRENT_TIMESTAMP, result = ? WHERE status_id = ?');
 	my $n_posted = 0;
+
+	# ========================================================================
+	# まとめモード(nターゲット/1post)
+	# カテゴリ 0 のターゲットのみ
+	if($#posts >= 0 && $multipostmode == 1 && $category == 0)
+	{
+		# 前処理: 回数計算等
+		my $bomb_type = 0;
+		my %targets = ();
+		foreach my $p (@posts)
+		{
+			if(defined($targets{$p->{target}}))
+			{
+				$targets{$p->{target}}->{count_now}++;
+			}
+			else
+			{
+				$targets{$p->{target}} = {
+					data => $p,
+					count_now => 1,		# この post での回数
+					count_total => 0,	# 合計回数
+					count_target => 0,
+				};
+			}
+
+			# 自爆,result 0 のものがあるかチェック
+			if($p->{result} == 0)
+			{
+				$bomb_type = 2;
+			}
+			if($p->{selfbomb} == 1)
+			{
+				$bomb_type = 1;
+			}
+		}
+
+		foreach my $t (keys(%targets))
+		{
+			# カウント対象なら数えておく
+			if($t =~ /$count_target_expr/i)
+			{
+				my $sql =
+					'SELECT COUNT(*) AS count FROM bombs' .
+					'  WHERE LOWER(target) = LOWER(?)' .
+					'    AND posted_at IS NOT NULL AND result = 1';
+				my $row = $dbh->selectrow_hashref($sql, undef, $t);
+
+				printf "%s: %d + %d\n", $t, $row->{count}, $targets{$t}->{count_now};
+				$targets{$t}->{count_total} =
+					$row->{count} + $targets{$t}->{count_now};
+				if($targets{$t}->{count_total} > 1)
+				{
+					$targets{$t}->{count_target} = 1;
+				}
+			}
+		}
+		#print Dump(%targets);
+
+		my $post_prefix;
+		my $post_suffix;
+
+		# プレフィクス・サフィックスの決定
+		if($bomb_type == 1)
+		{
+			$post_prefix = '';
+			$post_suffix = 'が自爆しました。';
+		}
+		elsif($bomb_type == 2)
+		{
+			$post_prefix = '昨今の社会情勢を鑑みて検討を行った結果、';
+			$post_suffix = 'は爆発しませんでした。';
+		}
+		else
+		{
+			$post_prefix = '';
+			$post_suffix = 'が爆発しました。';
+		}
+
+		my $post_content = '';
+		# 1 文字は連投対策の空白分
+		my $post_length = $conf->{multipost}->{max_length} - 1;
+
+		# 可変部分以外の文字数を引いておく
+		$post_length -= (length($post_prefix) + length($post_suffix));
+
+		foreach my $t (keys %targets)
+		{
+			my $p = $targets{$t}->{data};
+			# result0 のものがあればそれだけ，無ければそれ以外を追加していく
+			if($bomb_type == 1)
+			{
+				next if($p->{selfbomb} != 1);
+			}
+			elsif($bomb_type == 2)
+			{
+				next if($p->{result} != 0);
+			}
+			else
+			{
+				next if($p->{result} == 0);
+				next if($p->{selfbomb} == 1);
+			}
+
+			my $add_content = '';
+			if($post_content ne '')
+			{
+				$add_content .= '、';
+			}
+			$add_content .= $p->{target};
+
+			# 回数表示
+			if($targets{$t}->{count_now} > 1)
+			{
+				$add_content .= sprintf 'が%d発', $targets{$t}->{count_now};
+			}
+			if($targets{$t}->{count_target} == 1)
+			{
+				$add_content .= sprintf '(%d回目)',
+					$targets{$t}->{count_total};
+			}
+
+			if($post_length - length($add_content) < 0)
+			{
+				# これ以上追加できない
+				last;
+			}
+
+			$post_content .= $add_content;
+			$post_length -= length($add_content);
+
+			foreach(@posts)
+			{
+				if($_->{target} eq $t)
+				{
+					$_->{proceeded} = 1;
+				}
+			}
+		}
+
+		$post_content = $post_prefix . $post_content . $post_suffix;
+		printf "%s (len=%d)\n", $post_content, length($post_content);
+
+		foreach(@posts)
+		{
+			printf "%d %s\n", $_->{proceeded}, $_->{target};
+		}
+
+		# 投稿処理
+
+		my $twit_post = Net::Twitter->new(
+				username => $conf->{twitter}->{normal}->{username},
+				password => $conf->{twitter}->{normal}->{password});
+
+		logger('publisher', "post: $post_content");
+
+		my $status = undef;
+		if($conf->{twitter}->{normal}->{enable})
+		{
+			eval {
+				$status = $twit_post->update(encode('utf8', $post_content));
+			};
+
+			logger('publisher', sprintf('update main: code %d %s',
+				$twit_post->http_code, $twit_post->http_message));
+			logger('publisher', Dump($status));
+
+			if($twit_post->http_code == 200)
+			{
+				# post 成功: bombs を UPDATE する
+				foreach(@posts)
+				{
+					if($_->{proceeded} == 1)
+					{
+						$sth->execute($_->{result}, $_->{id});
+						$n_posted++;
+					}
+				}
+			}
+			else
+			{
+				&error('failed to update: ' . Dump($twit_post->get_error));
+			}
+
+# FIXME
+#			if($conf->{twitter_raw}->{enable})
+#			{
+#				my $twit2 = Net::Twitter->new(
+#					username => $conf->{twitter_raw}->{username},
+#					password => $conf->{twitter_raw}->{password});
+#				my $trigger = '-/0';
+#				if($permalink =~ m{twitter\.com/([^/]+)/statuses/(\d+)})
+#				{
+#					$trigger = $1 . '/' . $2;
+#				}
+#				my $target_san = $target;
+#				$target_san =~ s/\@/＠/g;
+#				for(my $try = 0; $try < 3; $try++)
+#				{
+#					eval {
+#						$status = $twit2->update(encode('utf8',
+#							sprintf('%d,%d|%s|%s',
+#								$bomb_result, $count, $trigger, $target_san)));
+#					};
+#					logger('publisher', 'update raw: code ' .
+#							$twit2->http_code . ' ' . $twit2->http_message);
+#					last if($twit2->http_code == 200);
+#				}
+#			}
+		}
+	}
+	# ========================================================================
+	else
+{
+	# 通常モード(1ターゲット/1post)
 	foreach(@posts)
 	{
 		my $post = $_->{post};
@@ -630,11 +813,6 @@ sub bombtter_publisher
 
 		# 負荷分散
 		my $lb_target = 'normal';
-		if(length($target) >= 10)
-		{
-			$lb_target = 'long';
-		}
-
 		if($_->{category} == 1)
 		{
 			$lb_target = 'long';
@@ -683,6 +861,7 @@ sub bombtter_publisher
 
 			if($twit_post->http_code == 200)
 			{
+				# post 成功: bombs を UPDATE する
 				$sth->execute($bomb_result, $_->{'id'});
 				$n_posted++;
 			}
@@ -717,6 +896,7 @@ sub bombtter_publisher
 			}
 		}
 	}
+}
 	$sth->finish;
 
 #	my $profile_name = 'bombtter';
