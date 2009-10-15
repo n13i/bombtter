@@ -474,14 +474,16 @@ sub bombtter_publisher
 
 	my $multipostmode = 1;
 
-	$sql = 'SELECT COUNT(*) AS count FROM bombs WHERE posted_at IS NULL';
+	# カテゴリ毎に算出
+	$sql = 'SELECT COUNT(*) AS count FROM bombs ' .
+		   'WHERE posted_at IS NULL AND category = ?';
 	if($limit_source >= 0)
 	{
 		$sql .= ' AND source = ' . $limit_source;
 	}
 
-	my $hashref = $dbh->selectrow_hashref($sql);
-	my $n_unposted = $hashref->{'count'};
+	my $hashref = $dbh->selectrow_hashref($sql, undef, $category);
+	my $n_unposted = $hashref->{count};
 	logger('publisher', "bombs in queue: $n_unposted");
 
 	# post queue の数を見て limit を調節する
@@ -921,6 +923,12 @@ sub bombtter_publisher
 
 	if($conf->{twitter_status}->{enable})
 	{
+		# カテゴリを問わないすべての残り bomb 数
+		$sql = 'SELECT COUNT(*) AS count FROM bombs ' .
+			   'WHERE posted_at IS NULL';
+		my $hashref = $dbh->selectrow_hashref($sql);
+		my $n_unposted = $hashref->{count};
+
 		my $twit2 = Net::Twitter->new(
 			username => $conf->{twitter_status}->{username},
 			password => $conf->{twitter_status}->{password});
