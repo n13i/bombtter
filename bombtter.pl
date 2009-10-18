@@ -646,6 +646,9 @@ sub bombtter_publisher
 				};
 			}
 
+			printf "%s, result=%d, selfbomb=%d\n",
+				$p->{target}, $p->{result}, $p->{selfbomb};
+
 			# 自爆,result 0 のものがあるかチェック
 			if($p->{result} == 0)
 			{
@@ -656,6 +659,8 @@ sub bombtter_publisher
 				$bomb_type = 1;
 			}
 		}
+
+		printf "bomb type = %d\n", $bomb_type;
 
 		foreach my $t (keys(%targets))
 		{
