@@ -574,6 +574,18 @@ sub bombtter_publisher
 			$result = 'が爆発しました。';
 		}
 
+
+		# 置換を post 構築前に変更 (2009/10/18)
+		# 2008/11/15 (fix 2008/11/18)
+		$target =~ s/^(\@[0-9a-zA-Z_]+)/$1 /g;
+		$target =~ s/(.+?)(\@[0-9a-zA-Z_]+)/$1 $2 /g;
+		$target =~ s/\s{2,}\@/ \@/g;
+		$target =~ s/(\@[0-9a-zA-Z_]+)\s{2,}/$1 /g;
+
+		# 仕様が変わったようなのでさらに置換しておく(2009/07/27)
+		# raw に投げるほうは別途置換 (2009/09/20)
+		$target =~ s/\@/＠/g;
+
 		my $bomb_result = 0;
 		my $post;
 		if($target =~ /$ignore_target_expr/i)
@@ -587,16 +599,6 @@ sub bombtter_publisher
 			$post = $target . $result;
 			$bomb_result = 1;
 		}
-
-		# 2008/11/15 (fix 2008/11/18)
-		$post =~ s/^(\@[0-9a-zA-Z_]+)/$1 /g;
-		$post =~ s/(.+?)(\@[0-9a-zA-Z_]+)/$1 $2 /g;
-		$post =~ s/\s{2,}\@/ \@/g;
-		$post =~ s/(\@[0-9a-zA-Z_]+)\s{2,}/$1 /g;
-
-		# 仕様が変わったようなのでさらに置換しておく(2009/07/27)
-		# raw に投げるほうは別途置換 (2009/09/20)
-		$post =~ s/\@/＠/g;
 
 		push(@posts, {
 			target => $target,
