@@ -162,7 +162,11 @@ sub bombtter_fetcher
 
 			$r = fetch_rss();
 			#$r = fetch_html($try + 1);
-			&error if(!defined($r));
+			#&error if(!defined($r));
+			if(!defined($r))
+			{
+				$r = { statuses => [] };
+			}
 	
 			#$remote_earliest_status_id = $r->{earliest_status_id};
 			$remote_earliest_status_id = -1;
@@ -171,7 +175,11 @@ sub bombtter_fetcher
 		{
 			#$r = fetch_im($conf->{db}->{im});
 			$r = fetch_im($conf->{db}->{timeliner});
-			&error if(!defined($r));
+			#&error if(!defined($r));
+			if(!defined($r))
+			{
+				$r = { statuses => [] };
+			}
 
 			# 強制的にリモートの最古 < ローカルの最新になるようにする
 			$remote_earliest_status_id = -1;
@@ -180,7 +188,12 @@ sub bombtter_fetcher
 		{
 			$r = fetch_api($conf->{twitter}->{normal}->{username},
 						   $conf->{twitter}->{normal}->{password});
-			&error if(!defined($r));
+			#&error if(!defined($r));
+			if(!defined($r))
+			{
+				$r = { statuses => [] };
+			}
+
 
 			$remote_earliest_status_id = -1;
 		}
