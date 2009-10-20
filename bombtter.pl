@@ -275,9 +275,9 @@ sub bombtter_analyzer
 	my @analyze_ng_ids = ();
 
 	my $mecab_opts = '';
-	if(defined($conf->{'mecab_userdic'}))
+	if(defined($conf->{mecab_userdic}))
 	{
-		$mecab_opts .= '--userdic=' . $conf->{'mecab_userdic'};
+		$mecab_opts .= '--userdic=' . $conf->{mecab_userdic};
 	}
 
 	my $sth_insert = $dbh->prepare(
@@ -331,6 +331,12 @@ sub bombtter_analyzer
 				$category = 1; # long
 			}
 	
+			# API ソースのものをちょっとだけ優先
+			if($source == 2)
+			{
+				$urgency++;
+			}
+
 			foreach my $expr (@urgent_keywords)
 			{
 				if($bombed_normalized =~ /$expr/i)
