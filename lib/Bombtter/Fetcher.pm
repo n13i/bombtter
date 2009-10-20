@@ -21,7 +21,8 @@ use Encode;
 use Web::Scraper;
 use URI;
 use Net::Twitter;
-use Net::Twitter::Diff;
+#use Net::Twitter::Diff;
+use YAML;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -419,26 +420,30 @@ sub fetch_api
 	my $r_statuses = [];
 	my $earliest_status_id = 99999999999;
 
-	#my $twit = Net::Twitter->new(username => $username, password => $password);
-	my $twit = Net::Twitter::Diff->new(username => $username, password => $password);
+	my $twit = Net::Twitter->new(username => $username, password => $password);
+	#my $twit = Net::Twitter::Diff->new(username => $username, password => $password);
 
 	#my $followers = $twit->followers();
 	#my $followers = $twit->xfollowers();
-	my $followers = [];
-	if(!defined($followers))
-	{
-		print "can't get followers\n";
-		return undef;
-	}
+	#my $followers = [];
+	#if(!defined($followers))
+	#{
+	#	print "can't get followers\n";
+	#	return undef;
+	#}
 
 	my $replies = $twit->replies();
 	if(!defined($replies))
 	{
-		print "can't get replies\n";
+		printf "can't get replies: code %d %s\n",
+			$twit->http_code, $twit->http_message;
+		print Dump($twit->get_error);
 		return undef;
 	}
-	printf "%s has %d followers, got %d replies\n", $username, $#{$followers}+1, $#{$replies}+1;
+	#printf "%s has %d followers, got %d replies\n", $username, $#{$followers}+1, $#{$replies}+1;
+	printf "got %d replies\n", $#{$replies}+1;
 
+=comment
 	foreach(@$followers)
 	{
 		last if(ref($_) ne 'HASH');
@@ -473,6 +478,7 @@ sub fetch_api
 			is_protected => $is_protected,
 		});
 	}
+=cut
 
 	foreach(@$replies)
 	{

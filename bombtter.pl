@@ -64,8 +64,8 @@ if($mode eq 'auto')
 	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
 	{
 		$mode		   = 'both';
-		$scrape_source = 1;      # IM only
-		#$scrape_source = 2;      # API only
+		#$scrape_source = 1;      # IM only
+		$scrape_source = 2;      # API only
 		$post_source   = -1;     # search + followers
 	}
 	else
@@ -178,8 +178,8 @@ sub bombtter_fetcher
 		}
 		elsif($source == 2)
 		{
-			$r = fetch_api($conf->{twitter}->{username},
-						   $conf->{twitter}->{password});
+			$r = fetch_api($conf->{twitter}->{normal}->{username},
+						   $conf->{twitter}->{normal}->{password});
 			&error if(!defined($r));
 
 			$remote_earliest_status_id = -1;
