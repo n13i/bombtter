@@ -160,7 +160,7 @@ sub bombtter_fetcher
 			logger('fetcher', "sleeping 5 sec ...");
 			sleep(5);
 
-			$r = fetch_rss();
+			$r = fetch_rss($conf->{fetcher}->{rss_source});
 			#$r = fetch_html($try + 1);
 			#&error if(!defined($r));
 			if(!defined($r))

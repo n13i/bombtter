@@ -23,6 +23,7 @@ use URI;
 use Net::Twitter;
 #use Net::Twitter::Diff;
 use YAML;
+use HTML::Entities;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -41,8 +42,18 @@ sub _urlencode
 
 sub fetch_rss
 {
-	#return &_fetch_rss_1x1;
-	return &_fetch_rss_pcod;
+	my $service = shift || 'pcod';
+
+	if($service eq '1x1')
+	{
+		return &_fetch_rss_1x1;
+	}
+	elsif($service eq 'pcod')
+	{
+		return &_fetch_rss_pcod;
+	}
+
+	return &_fetch_rss_official;
 }
 
 sub _fetch_rss_1x1
@@ -81,6 +92,34 @@ sub _fetch_rss_pcod
 	$content = decode('utf8', $content);
 
 	return &_parse_rss_pcod($content);
+}
+
+sub _fetch_rss_official
+{
+	my $r = undef;
+	my $tmp = [];
+
+	for(my $i = 1; $i <= 3; $i++)
+	{
+		my $uri = 'http://search.twitter.com/search.atom?q='
+				  . &_urlencode($SEARCH_KEYWORD)
+				  . '&page=' . $i;
+
+		printf "Twitter search RSS (official:%d) ...\n", $i;
+
+		my $content = &_fetch_uri($uri);
+		if(!defined($content))
+		{
+			last;
+		}
+
+		$content = decode('utf8', $content);
+
+		$r = &_parse_rss_official($content, $tmp);
+		$tmp = $r->{statuses};
+	}
+
+	return $r;
 }
 
 
@@ -197,6 +236,88 @@ sub _parse_rss_1x1
 	else
 	{
 		print "RSS error: can't find channel\n";
+		return undef;
+	}
+}
+
+sub _parse_rss_official
+{
+	my $buf = shift || return undef;
+	my $r_statuses = shift || [];
+
+	if($buf =~ m{<feed(.+?)</feed>}msx)
+	{
+		my $feed = $1;
+
+		#my $r_statuses = [];
+		my $earliest_status_id = 99999999999;
+
+		foreach($feed =~ m{<entry>(.+?)</entry>}gmsx)
+		{
+			my ($name, $screen_name, $status_text, $permalink, $status_id);
+
+			$_ = decode_entities($_);
+
+# <entry>
+#   <id>tag:search.twitter.com,2005:5282870124</id>
+#   <published>2009-10-30T08:50:06Z</published>
+#   <link type="text/html" href="http://twitter.com/yuuna/statuses/5282870124" rel="alternate"/>
+#   <title>DJ&#12477;&#12523;&#12488;&#29190;&#30330;&#12375;&#12429;</title>
+#   <content type="html">DJ&#12477;&#12523;&#12488;&#29190;&#30330;&#12375;&#12429;</content>
+#   <updated>2009-10-30T08:50:06Z</updated>
+#   <link type="image/png" href="http://a3.twimg.com/profile_images/424187279/tw_re_normal.jpg" rel="image"/>
+#   <twitter:geo>
+#   </twitter:geo>
+#   <twitter:source>&lt;a href=&quot;http://d.hatena.ne.jp/lynmock/20071107/p2&quot; rel=&quot;nofollow&quot;&gt;P3:PeraPeraPrv&lt;/a&gt;</twitter:source>
+#   <twitter:lang>ja</twitter:lang>
+#   <author>
+#     <name>yuuna (&#22805;&#33756;)</name>
+#     <uri>http://twitter.com/yuuna</uri>
+#   </author>
+# </entry>
+
+			if(m{
+				<link\stype="text/html"\shref="http\://twitter\.com/[^/]+/status(?:es)?/(\d+)"[^>]*>.+?
+				<content\stype="html">(.+?)</content>.+?
+				<author>.+?<name>(.+?)</name>.+?
+				<uri>http\://twitter\.com\/([^<]+)</uri>.+?</author>
+				}msx)
+			{
+				$status_id = $1;
+				$status_text = $2;
+				$name = $3;
+				$screen_name = $4;
+
+				my $screen_name_noat = $screen_name;
+				$screen_name = '@' . $screen_name;
+				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
+
+				$status_text = &_normalize_status_text($status_text);
+
+				push(@$r_statuses, {
+					status_id    => $status_id,
+					permalink    => $permalink,
+					name         => $name,
+					screen_name  => $screen_name,
+					status_text  => $status_text,
+					is_protected => 0,  # public RSS
+				});
+
+				if($status_id < $earliest_status_id)
+				{
+					$earliest_status_id = $status_id;
+				}
+			}
+		}
+
+		return {
+			'earliest_status_id' => $earliest_status_id,
+			'statuses' => $r_statuses,
+		};
+	}
+	else
+	{
+		print "RSS error: can't find feed\n";
 		return undef;
 	}
 }
