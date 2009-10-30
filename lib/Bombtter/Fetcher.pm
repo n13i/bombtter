@@ -293,6 +293,7 @@ sub _parse_rss_official
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
+				$status_text =~ s/<b>($SEARCH_KEYWORD)<\/b>/$1/g;
 
 				push(@$r_statuses, {
 					status_id    => $status_id,
