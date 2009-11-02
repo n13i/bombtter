@@ -541,6 +541,11 @@ sub bombtter_publisher
 	{
 		$limit = int($n_unposted/5)*5+1;
 	}
+	else
+	{
+		$multipostmode = 0;
+	}
+
 	my $max_posts_at_once = $conf->{'max_posts_at_once'} || 1;
 	if($limit > $max_posts_at_once)
 	{
@@ -721,8 +726,10 @@ sub bombtter_publisher
 		}
 		else
 		{
-			$post_prefix = '';
-			$post_suffix = 'が爆発しました。';
+			#$post_prefix = '';
+			#$post_suffix = 'が爆発しました。';
+			$post_prefix = '【緊急爆発情報】';
+			$post_suffix = '';
 		}
 
 		my $post_content = '';
