@@ -728,7 +728,7 @@ sub bombtter_publisher
 		{
 			#$post_prefix = '';
 			#$post_suffix = 'が爆発しました。';
-			$post_prefix = '【緊急爆発情報】';
+			$post_prefix = '【爆発】';
 			$post_suffix = '';
 		}
 
