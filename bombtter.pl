@@ -350,6 +350,12 @@ sub bombtter_analyzer
 				$urgency++;
 			}
 
+			# 短い物を先に処理
+			if(length($bombed) <= 5)
+			{
+				$urgency++;
+			}
+
 			foreach my $expr (@urgent_keywords)
 			{
 				if($bombed_normalized =~ /$expr/i)
