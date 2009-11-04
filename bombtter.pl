@@ -732,10 +732,10 @@ sub bombtter_publisher
 		}
 		else
 		{
-			#$post_prefix = '';
-			#$post_suffix = 'が爆発しました。';
-			$post_prefix = '【爆発】';
-			$post_suffix = '';
+			$post_prefix = '';
+			$post_suffix = 'が爆発しました。';
+			#$post_prefix = '【爆発】';
+			#$post_suffix = '';
 		}
 
 		my $post_content = '';
@@ -767,7 +767,8 @@ sub bombtter_publisher
 			my $add_content = '';
 			if($post_content ne '')
 			{
-				$add_content .= '、';
+				#$add_content .= '、';
+				$add_content .= 'と';
 			}
 			$add_content .= $p->{target};
 
