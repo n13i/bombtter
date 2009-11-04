@@ -733,7 +733,7 @@ sub bombtter_publisher
 		else
 		{
 			$post_prefix = '';
-			$post_suffix = 'が一緒に爆発しました。';
+			$post_suffix = 'が爆発しました。';
 			#$post_prefix = '【爆発】';
 			#$post_suffix = '';
 		}
