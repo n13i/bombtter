@@ -25,7 +25,7 @@ while(my $update = $sth->fetchrow_hashref)
 	my $target = $update->{'target'};
 
     my $ntarget = decode('utf8',
-        Jcode->new(encode('utf8', $bombed))->h2z->utf8);
+        Jcode->new(encode('utf8', $target))->h2z->utf8);
     $ntarget =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
 
     if($target ne $ntarget)
