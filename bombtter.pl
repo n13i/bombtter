@@ -614,7 +614,8 @@ sub bombtter_publisher
 
 		# 仕様が変わったようなのでさらに置換しておく(2009/07/27)
 		# raw に投げるほうは別途置換 (2009/09/20)
-		$target =~ s/\@/＠/g;
+		# 全角＠もリプライ扱いされるようになったので変更(2009/11/18)
+		$target =~ s/\@/\@ /g;
 
 		my $bomb_result = 0;
 		my $post;
@@ -976,7 +977,7 @@ sub bombtter_publisher
 					$trigger = $1 . '/' . $2;
 				}
 				my $target_san = $target;
-				$target_san =~ s/\@/＠/g;
+				$target_san =~ s/\@/\@ /g;
 				for(my $try = 0; $try < 3; $try++)
 				{
 					eval {
