@@ -8,6 +8,7 @@ use utf8;
 use lib './lib';
 use Bombtter;
 
+use Encode;
 use Jcode;
 
 my $conf = load_config;
