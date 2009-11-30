@@ -29,13 +29,13 @@ my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{db}->{bombcloud}, '', '', 
 
 my @posts = ();
 #my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs GROUP BY target HAVING count >= ? ORDER BY count DESC');
-my $sth = $dbh->prepare('SELECT COUNT(*) as count, target_normalized FROM bombs WHERE posted_at IS NOT NULL AND result = 1 GROUP BY LOWER(target_normalized) HAVING count >= ' . $thresh . ' ORDER BY count DESC, target_normalized');
+my $sth = $dbh->prepare('SELECT COUNT(*) as count, target FROM bombs WHERE posted_at IS NOT NULL AND result = 1 GROUP BY LOWER(target) HAVING count >= ' . $thresh . ' ORDER BY count DESC, target');
 #$sth->execute($thresh);
 $sth->execute();
 while(my $update = $sth->fetchrow_hashref)
 {
 	my $count = $update->{'count'};
-	my $target = $update->{'target_normalized'};
+	my $target = $update->{'target'};
 
     print "$target ($count)\n";
 
@@ -63,14 +63,14 @@ EOM
     my %exploders = ();
 #    my $sth_stats = $dbh->prepare('SELECT b.target AS target, b.posted_at AS posted_at, s.status_text AS status_text, s.permalink AS permalink, s.name AS name, s.screen_name AS screen_name, s.is_protected as is_protected FROM statuses s, bombs b WHERE s.status_id = b.status_id AND b.posted_at IS NOT NULL AND b.result = 1 AND LOWER(b.target) = LOWER(?) ORDER BY s.status_id DESC');
     my $sth_stats = $dbh->prepare(
-        'SELECT target_normalized, posted_at, status_text, permalink, ' .
+        'SELECT target, posted_at, status_text, permalink, ' .
             'name, screen_name, is_protected ' .
         'FROM bombs ' .
             'LEFT JOIN statuses ON bombs.status_id = statuses.status_id ' .
-        'WHERE bombs.result = 1 AND LOWER(target_normalized) = ? ' .
+        'WHERE bombs.result = 1 AND LOWER(target) = ? ' .
         'ORDER BY bombs.status_id DESC'
     );
-    $sth_stats->execute(lc($target_normalized));
+    $sth_stats->execute(lc($target));
     while(my $stats = $sth_stats->fetchrow_hashref)
     {
         use YAML;

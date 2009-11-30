@@ -305,7 +305,7 @@ sub bombtter_analyzer
 		logger('analyzer', "target: " . $target);
 
 		# 爆発させないフラグ
-		if($target =~ /爆発しろ.+-b/i || $target =~ /[QR]T\s\@/)
+		if($target =~ /爆発しろ.+-b/i || $target =~ /RT\s\@/)
 		{
 			push(@analyze_nobomb_ids, $status_id);
 			logger('analyzer', "result: has no-bomb flag");
@@ -518,8 +518,7 @@ sub bombtter_publisher
 
 		my $sth_word = $dbh->prepare(
 			'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-			"WHERE LOWER(target_normalized) LIKE '%" . $_ . "%' " .
-			'AND posted_at IS NULL');
+			"WHERE LOWER(target) LIKE '%" . $_ . "%' AND posted_at IS NULL");
 		$sth_word->execute;
 		$sth_word->finish; undef $sth_word;
 	}
@@ -566,7 +565,7 @@ sub bombtter_publisher
 
 	my @posts = ();
 	$sql =
-		'SELECT rowid, status_id, target, target_normalized, category, '.
+		'SELECT rowid, status_id, target, category, '.
 		'(SELECT s.permalink FROM statuses s ' .
 		'WHERE s.status_id = b.status_id) AS permalink ' .
 		'FROM bombs b WHERE posted_at IS NULL ';
@@ -584,7 +583,6 @@ sub bombtter_publisher
 		my $status_id = $update->{status_id};
 		my $rowid = $update->{rowid};
 		my $target = $update->{target};
-		my $ntarget = $update->{target_normalized};
 		my $category = $update->{category};
 		my $permalink = $update->{permalink};
 
@@ -635,7 +633,6 @@ sub bombtter_publisher
 
 		push(@posts, {
 			target => $target,
-			target_normalized=> $ntarget,
 			category => $category,
 			id => $status_id,
 			post => $post,
@@ -668,13 +665,13 @@ sub bombtter_publisher
 		my %targets = ();
 		foreach my $p (@posts)
 		{
-			if(defined($targets{$p->{target_normalized}}))
+			if(defined($targets{$p->{target}}))
 			{
-				$targets{$p->{target_normalized}}->{count_now}++;
+				$targets{$p->{target}}->{count_now}++;
 			}
 			else
 			{
-				$targets{$p->{target_normalized}} = {
+				$targets{$p->{target}} = {
 					data => $p,
 					count_now => 1,		# この post での回数
 					count_total => 0,	# 合計回数
@@ -705,7 +702,7 @@ sub bombtter_publisher
 			{
 				my $sql =
 					'SELECT COUNT(*) AS count FROM bombs' .
-					'  WHERE LOWER(target_normalized) = LOWER(?)' .
+					'  WHERE LOWER(target) = LOWER(?)' .
 					'    AND posted_at IS NOT NULL AND result = 1';
 				my $row = $dbh->selectrow_hashref($sql, undef, $t);
 
@@ -905,7 +902,6 @@ sub bombtter_publisher
 	{
 		my $post = $_->{post};
 		my $target = $_->{target};
-		my $ntarget = $_->{target_normalized};
 		my $rowid = $_->{rowid};
 		my $bomb_result = $_->{result};
 		my $permalink = $_->{permalink};
@@ -927,12 +923,12 @@ sub bombtter_publisher
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
-			'  WHERE LOWER(target_normalized) = LOWER(?)' .
+			'  WHERE LOWER(target) = LOWER(?)' .
 			'    AND posted_at IS NOT NULL AND result = 1';  # post されたものから数える
 #			'  GROUP BY target';
 		my $sth_count = $dbh->prepare($sql);
 
-		$sth_count->execute($ntarget);
+		$sth_count->execute($target);
 		if(my $ary = $sth_count->fetchrow_hashref)
 		{
 			$count = $ary->{count}+1;
