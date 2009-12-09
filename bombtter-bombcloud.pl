@@ -150,7 +150,7 @@ print FH <<EOM;
     </div>
     <h1>bombcloud</h1>
     <p>
-      Twitter でだれもが爆発しているよ！
+      これはいい爆発ですね！
     </p>
     <p>
       $thresh 回以上爆発したものを表示しています。(約 1 時間毎に更新)
