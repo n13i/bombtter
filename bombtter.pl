@@ -358,7 +358,7 @@ sub bombtter_analyzer
 
 			foreach my $expr (@urgent_keywords)
 			{
-				if($bombed_normalized =~ /$expr/i)
+				if($bombed_normalized =~ /\Q$expr\E/i)
 				{
 					$urgency++;
 				}
