@@ -125,15 +125,9 @@ sub bombtter_fetcher
 	logger('fetcher', 'running fetcher ' . $Bombtter::Fetcher::revision);
 	logger('fetcher', 'source: ' . $source_name[$source]);
 
-	my $ignore_name = $conf->{twitter}->{username};
-	if(defined($conf->{ignore_name_expr}))
-	{
-		if($conf->{ignore_name_expr} ne '')
-		{
-			$ignore_name .= '|' . $conf->{ignore_name_expr};
-		}
-	}
-	logger('fetcher', "ignore: $ignore_name");
+	my $ignore_name_expr = join('|', @{$conf->{ignore_name_expr}});
+	$ignore_name_expr = '^(' . $conf->{twitter}->{username} . '|' . $ignore_name_expr . ')$';
+	logger('fetcher', "ignore: $ignore_name_expr");
 
 
 	# ソースごとのローカル最新ステータス ID を取得
