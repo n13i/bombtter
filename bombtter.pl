@@ -126,7 +126,7 @@ sub bombtter_fetcher
 	logger('fetcher', 'source: ' . $source_name[$source]);
 
 	my $ignore_name_expr = join('|', @{$conf->{ignore_name_expr}});
-	$ignore_name_expr = '^(' . $conf->{twitter}->{username} . '|' . $ignore_name_expr . ')$';
+	$ignore_name_expr = $conf->{twitter}->{username} . '|' . $ignore_name_expr;
 	logger('fetcher', "ignore: $ignore_name_expr");
 
 
@@ -202,7 +202,8 @@ sub bombtter_fetcher
 		$dbh->begin_work; # commit するまで AutoCommit がオフになる
 		foreach(@{$r->{statuses}})
 		{
-			if($_->{screen_name} =~ /$ignore_name_expr/)
+			# screen_name には @ が含まれる点に注意
+			if($_->{screen_name} =~ /^\@($ignore_name_expr)$/)
 			{
 				next;
 			}
