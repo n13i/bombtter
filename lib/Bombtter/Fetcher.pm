@@ -254,7 +254,7 @@ sub _parse_rss_official
 
 		foreach($feed =~ m{<entry>(.+?)</entry>}gmsx)
 		{
-			my ($name, $screen_name, $status_text, $permalink, $status_id);
+			my ($name, $screen_name, $status_text, $permalink, $status_id, $source);
 
 			$_ = decode_entities($_);
 
@@ -279,14 +279,16 @@ sub _parse_rss_official
 			if(m{
 				<link\stype="text/html"\shref="http\://twitter\.com/[^/]+/status(?:es)?/(\d+)"[^>]*>.+?
 				<content\stype="html">(.+?)</content>.+?
+				<twitter\:source>(.+?)</twitter\:source>.+?
 				<author>.+?<name>(.+?)</name>.+?
 				<uri>http\://twitter\.com\/([^<]+)</uri>.+?</author>
 				}msx)
 			{
 				$status_id = $1;
 				$status_text = $2;
-				$name = $3;
-				$screen_name = $4;
+				$source = $3;
+				$name = $4;
+				$screen_name = $5;
 
 				my $screen_name_noat = $screen_name;
 				$screen_name = '@' . $screen_name;
@@ -302,6 +304,7 @@ sub _parse_rss_official
 					screen_name  => $screen_name,
 					status_text  => $status_text,
 					is_protected => 0,  # public RSS
+					source       => $source,
 				});
 
 				if($status_id < $earliest_status_id)
@@ -624,6 +627,7 @@ sub fetch_api
 		my $name        = $_->{user}->{name};
 		my $permalink   = 'http://twitter.com/' . $_->{user}->{screen_name} . '/statuses/' . $status_id;
 		my $status_text = $_->{text};
+		my $source      = $_->{source};
 
 		$status_text = &_normalize_status_text($status_text);
 
@@ -634,6 +638,7 @@ sub fetch_api
 			screen_name  => $screen_name,
 			status_text  => $status_text,
 			is_protected => $is_protected,
+			source       => $source,
 		});
 	}
 

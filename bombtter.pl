@@ -205,7 +205,23 @@ sub bombtter_fetcher
 			# screen_name には @ が含まれる点に注意
 			if($_->{screen_name} =~ /^\@($ignore_name_expr)$/)
 			{
+				logger('fetcher', 'ignore (by name): ' .
+					   $_->{status_id} . '|' .
+					   $_->{screen_name} . '|' .
+					   $_->{status_text});
 				next;
+			}
+
+			if(defined($_->{source}))
+			{
+				if($_->{source} =~ m{http\://apiwiki\.twitter\.com/})
+				{
+					logger('fetcher', 'ignore (maybe bot): ' .
+						   $_->{status_id} . '|' .
+						   $_->{screen_name} . '|' .
+						   $_->{status_text});
+					next;
+				}
 			}
 
 			if($_->{status_id} > $local_latest_status_id)
