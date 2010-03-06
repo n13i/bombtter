@@ -129,6 +129,7 @@ sub bombtter_fetcher
 	$ignore_name_expr = $conf->{twitter}->{username} . '|' . $ignore_name_expr;
 	logger('fetcher', "ignore: $ignore_name_expr");
 
+	my $ignore_source_expr = join('|', @{$conf->{ignore_source_expr}});
 
 	# ソースごとのローカル最新ステータス ID を取得
 	my $hashref = $dbh->selectrow_hashref('SELECT status_id FROM statuses WHERE source = ' . $source . ' ORDER BY status_id DESC LIMIT 1');
@@ -214,9 +215,9 @@ sub bombtter_fetcher
 
 			if(defined($_->{source}))
 			{
-				if($_->{source} =~ m{http\://apiwiki\.twitter\.com/})
+				if($_->{source} =~ m{$ignore_source_expr})
 				{
-					logger('fetcher', 'ignore (maybe bot): ' .
+					logger('fetcher', 'ignore (by source): ' .
 						   $_->{status_id} . '|' .
 						   $_->{screen_name} . '|' .
 						   $_->{status_text});
