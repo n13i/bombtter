@@ -328,16 +328,17 @@ sub bombtter_analyzer
 		my $bombed_normalized;
 
 		# april fool hack (2009/03/28)
-		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-			localtime(time);
-		if(($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool})
-		{
-			$bombed = $update->{screen_name};
-		}
-		else
-		{
-			$bombed = analyze($target, $mecab_opts);
-		}
+		#my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+		#	localtime(time);
+		#if(($mon+1 == 4 && $mday == 1) || $conf->{debug_aprilfool})
+		#{
+		#	$bombed = $update->{screen_name};
+		#}
+		#else
+		#{
+		#	$bombed = analyze($target, $mecab_opts);
+		#}
+		$bombed = analyze($target, $mecab_opts);
 
 		#my $analyze_result;
 
