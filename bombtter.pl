@@ -837,6 +837,19 @@ sub bombtter_publisher
 		}
 
 		$post_content = $post_prefix . $post_content . $post_suffix;
+		# april fool hack 2010
+		# 自爆時(bomb_type == 1)メッセージ変更
+		if(($dt_local_now->year == 2010 &&
+			$dt_local_now->month == 4 &&
+			$dt_local_now->day == 1) ||
+		   $conf->{debug_aprilfool})
+		{
+			if($bomb_type == 1)
+			{
+				$post_content = 'システムエラーが起きました。';
+			}
+		}
+
 		printf "%s (len=%d)\n", $post_content, length($post_content);
 
 		foreach(@posts)
@@ -918,6 +931,7 @@ sub bombtter_publisher
 		my $rowid = $_->{rowid};
 		my $bomb_result = $_->{result};
 		my $permalink = $_->{permalink};
+		my $selfbomb = $_->{selfbomb};
 		my $count = 1;
 
 		# 負荷分散
@@ -948,6 +962,18 @@ sub bombtter_publisher
 			if($target =~ /$count_target_expr/i && $count > 1)
 			{
 				$post .= '(' . $count . '回目)';
+			}
+		}
+
+		# april fool hack 2010
+		if(($dt_local_now->year == 2010 &&
+			$dt_local_now->month == 4 &&
+			$dt_local_now->day == 1) ||
+		   $conf->{debug_aprilfool})
+		{
+			if($selfbomb == 1)
+			{
+				$post = 'システムエラーが起きました。';
 			}
 		}
 
