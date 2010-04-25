@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use utf8;
 
-use Net::Twitter;
+use Net::Twitter::Lite;
 use Encode;
 use YAML;
 
@@ -13,14 +13,15 @@ use Bombtter;
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
 
-my $twitter = Net::Twitter->new(
-	username => $conf->{twitter}->{username},
-	password => $conf->{twitter}->{password},
+my $twitter = Net::Twitter::Lite->new(
+	consumer_key => $conf->{twitter}->{consumer_key},
+	consumer_secret => $conf->{twitter}->{consumer_secret},
 );
 
 my %func = (
 	update_location => \&update_location,
 	rate_limit_status => \&rate_limit_status,
+	oauth => \&oauth,
 );
 
 my $do = shift @ARGV || &usage;
@@ -40,24 +41,47 @@ sub usage
 sub update_location
 {
 	my $location = shift || die;
+
+	&_do_auth('normal');
+
 	my $r = $twitter->update_profile({location => encode('utf8', $location)});
 	print Dump($r);
 
-	my $twit = Net::Twitter->new(
-		username => $conf->{twitter_status}->{username},
-		password => $conf->{twitter_status}->{password},
-	);
+	&_do_auth('status');
 	eval {
-		my $s = $twit->update(encode('utf8', sprintf('【更新】%s', $location)));
+		my $s = $twitter->update(
+			encode('utf8', sprintf('【更新】%s', $location)));
 		print Dump($s);
-		print Dump($twit->get_error);
+		print Dump($twitter->get_error);
 	};
 }
 
 sub rate_limit_status
 {
+	my $account = shift || 'normal';
+
+	&_do_auth($account);
 	my $r = $twitter->rate_limit_status;
 	print Dump($r);
+}
+
+sub oauth
+{
+    printf "Authorization URL: %s\n", $twitter->get_authorization_url;
+    my $pin = <STDIN>;
+    chomp $pin;
+
+    print Dump($twitter->request_access_token(verifier => $pin));
+}
+
+sub _do_auth
+{
+	my $account = shift || die;
+
+	$twitter->access_token(
+		$conf->{twitter}->{$account}->{access_token});
+	$twitter->access_token_secret(
+		$conf->{twitter}->{$account}->{access_token_secret});
 }
 
 # vim: noexpandtab

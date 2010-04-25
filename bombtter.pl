@@ -8,7 +8,7 @@ use warnings;
 use strict;
 use utf8;
 
-use Net::Twitter;
+use Net::Twitter::Lite;
 use Encode;
 use Jcode;
 use YAML;  # for YAML::Dump
@@ -183,8 +183,8 @@ sub bombtter_fetcher
 		elsif($source == 2)
 		{
 			$r = fetch_api(
-				$conf->{twitter}->{normal}->{consumer_key},
-				$conf->{twitter}->{normal}->{consumer_secret},
+				$conf->{twitter}->{consumer_key},
+				$conf->{twitter}->{consumer_secret},
 				$conf->{twitter}->{normal}->{access_token},
 				$conf->{twitter}->{normal}->{access_token_secret},
 			);
@@ -666,9 +666,9 @@ sub bombtter_publisher
 	$sth->finish;
 
 
-	my $twit = Net::Twitter->new(
-			username => $conf->{twitter}->{username},
-			password => $conf->{twitter}->{password});
+#	my $twit = Net::Twitter->new(
+#			username => $conf->{twitter}->{username},
+#			password => $conf->{twitter}->{password});
 
 	$sth = $dbh->prepare(
 			'UPDATE bombs SET posted_at = CURRENT_TIMESTAMP, result = ? WHERE status_id = ?');
@@ -865,9 +865,14 @@ sub bombtter_publisher
 
 		# 投稿処理
 
-		my $twit_post = Net::Twitter->new(
-				username => $conf->{twitter}->{normal}->{username},
-				password => $conf->{twitter}->{normal}->{password});
+		my $twit_post = Net::Twitter::Lite->new(
+			consumer_key => $conf->{twitter}->{consumer_key},
+			consumer_secret => $conf->{twitter}->{consumer_secret}
+		);
+		$twit_post->access_token(
+			$conf->{twitter}->{normal}->{access_token});
+		$twit_post->access_token_secret(
+			$conf->{twitter}->{normal}->{access_token_secret});
 
 		logger('publisher', "post: $post_content");
 
@@ -950,9 +955,14 @@ sub bombtter_publisher
 		logger('publish', sprintf('using account %s for %s target',
 			$conf->{twitter}->{$lb_target}->{username}, $lb_target));
 
-		my $twit_post = Net::Twitter->new(
-				username => $conf->{twitter}->{$lb_target}->{username},
-				password => $conf->{twitter}->{$lb_target}->{password});
+		my $twit_post = Net::Twitter::Lite->new(
+			consumer_key => $conf->{twitter}->{consumer_key},
+			consumer_secret => $conf->{twitter}->{consumer_secret},
+		);
+		$twit_post->access_token(
+			$conf->{twitter}->{$lb_target}->{access_token});
+		$twit_post->access_token_secret(
+			$conf->{twitter}->{$lb_target}->{access_token_secret});
 
 		my $sql =
 			'SELECT COUNT(*) AS count FROM bombs' .
@@ -1013,9 +1023,14 @@ sub bombtter_publisher
 
 			if($conf->{twitter_raw}->{enable})
 			{
-				my $twit2 = Net::Twitter->new(
-					username => $conf->{twitter_raw}->{username},
-					password => $conf->{twitter_raw}->{password});
+				my $twit2 = Net::Twitter::Lite->new(
+					consumer_key => $conf->{twitter}->{consumer_key},
+					consumer_secret => $conf->{twitter}->{consumer_secret}
+				);
+				$twit2->access_token(
+					$conf->{twitter}->{raw}->{access_token});
+				$twit2->access_token_secret(
+					$conf->{twitter}->{raw}->{access_token_secret});
 				my $trigger = '-/0';
 				if($permalink =~ m{twitter\.com/([^/]+)/statuses/(\d+)})
 				{
@@ -1050,9 +1065,9 @@ sub bombtter_publisher
 
 	logger('publisher', "posted $n_posted bombs, $n_unposted unposted.");
 
-	my $ratelimit = $twit->rate_limit_status;
-	logger('publisher', sprintf('Twitter API: %s/%s',
-		$ratelimit->{remaining_hits}, $ratelimit->{hourly_limit}));
+#	my $ratelimit = $twit->rate_limit_status;
+#	logger('publisher', sprintf('Twitter API: %s/%s',
+#		$ratelimit->{remaining_hits}, $ratelimit->{hourly_limit}));
 
 	if($conf->{twitter_status}->{enable})
 	{
@@ -1062,9 +1077,14 @@ sub bombtter_publisher
 		my $hashref = $dbh->selectrow_hashref($sql);
 		my $n_unposted = $hashref->{count};
 
-		my $twit2 = Net::Twitter->new(
-			username => $conf->{twitter_status}->{username},
-			password => $conf->{twitter_status}->{password});
+		my $twit2 = Net::Twitter::Lite->new(
+			consumer_key => $conf->{twitter}->{consumer_key},
+			consumer_secret => $conf->{twitter}->{consumer_secret}
+		);
+		$twit2->access_token(
+			$conf->{twitter}->{status}->{access_token});
+		$twit2->access_token_secret(
+			$conf->{twitter}->{status}->{access_token_secret});
 		eval {
 			if($n_unposted >= 10)
 			{
