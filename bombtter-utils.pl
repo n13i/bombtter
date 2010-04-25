@@ -44,13 +44,13 @@ sub update_location
 
 	&_do_auth('normal');
 
-	my $r = $twitter->update_profile({location => encode('utf8', $location)});
+	my $r = $twitter->update_profile({location => $location});
 	print Dump($r);
 
 	&_do_auth('status');
 	eval {
 		my $s = $twitter->update(
-			encode('utf8', sprintf('【更新】%s', $location)));
+			sprintf('【更新】%s', $location));
 		print Dump($s);
 		print Dump($twitter->get_error);
 	};
