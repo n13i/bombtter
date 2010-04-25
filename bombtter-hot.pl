@@ -4,7 +4,7 @@ use strict;
 use utf8;
 
 use DateTime;
-use Net::Twitter;
+use Net::Twitter::Lite;
 use Encode;
 use YAML;
 
@@ -26,8 +26,13 @@ my $dt_now = DateTime->now(time_zone => '+0000');
 #$dt_now->subtract(hours => 28);
 
 my $twit = Net::Twitter->new(
-		username => $conf->{twitter}->{normal}->{username},
-		password => $conf->{twitter}->{normal}->{password});
+    consumer_key => $conf->{twitter}->{consumer_key},
+    consumer_secret => $conf->{twitter}->{consumer_secret},
+);
+$twit->access_token(
+    $conf->{twitter}->{normal}->{access_token});
+$twit->access_token_secret(
+    $conf->{twitter}->{normal}->{access_token_secret});
 
 # ---------------------------------------------------------------------------
 # 最新の処理済み post の日時を取得
@@ -149,10 +154,10 @@ foreach my $b (@buzz)
     		{
                 my $status;
                 eval {
-    				$status = $twit->update(encode('utf8',
-    					sprintf('HOT: %s', $b->{target})));
+    				$status = $twit->update(
+    					sprintf('HOT: %s', $b->{target}));
                 };
-				if($twit->http_code == 200)
+				if(!$@)
 				{
 	        		$sth->execute($b->{target});
 				}

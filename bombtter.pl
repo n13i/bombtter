@@ -883,12 +883,13 @@ sub bombtter_publisher
 				$status = $twit_post->update($post_content);
 			};
 
-			logger('publisher', sprintf('update main: code %d %s',
-				$twit_post->http_code, $twit_post->http_message));
-			logger('publisher', Dump($status));
+#			logger('publisher', sprintf('update main: code %d %s',
+#				$twit_post->http_code, $twit_post->http_message));
+#			logger('publisher', Dump($status));
 
-			if($twit_post->http_code == 200)
+			if(!$@)
 			{
+				logger('publisher', Dump($status));
 				# post 成功: bombs を UPDATE する
 				foreach(@posts)
 				{
@@ -1006,12 +1007,13 @@ sub bombtter_publisher
 		{
 			eval { $status = $twit_post->update($post); };
 
-			logger('publisher', 'update main: code ' .
-								$twit_post->http_code . ' ' . $twit_post->http_message);
-			logger('publisher', Dump($status));
+#			logger('publisher', 'update main: code ' .
+#								$twit_post->http_code . ' ' . $twit_post->http_message);
 
-			if($twit_post->http_code == 200)
+			if(!$@)
 			{
+				logger('publisher', Dump($status));
+
 				# post 成功: bombs を UPDATE する
 				$sth->execute($bomb_result, $_->{'id'});
 				$n_posted++;
@@ -1045,9 +1047,9 @@ sub bombtter_publisher
 							sprintf('%d,%d|%s|%s',
 								$bomb_result, $count, $trigger, $target_san));
 					};
-					logger('publisher', 'update raw: code ' .
-							$twit2->http_code . ' ' . $twit2->http_message);
-					last if($twit2->http_code == 200);
+#					logger('publisher', 'update raw: code ' .
+#							$twit2->http_code . ' ' . $twit2->http_message);
+					last if(!$@);
 				}
 			}
 		}
