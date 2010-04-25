@@ -880,7 +880,7 @@ sub bombtter_publisher
 		if($conf->{twitter}->{normal}->{enable})
 		{
 			eval {
-				$status = $twit_post->update(encode('utf8', $post_content));
+				$status = $twit_post->update($post_content);
 			};
 
 			logger('publisher', sprintf('update main: code %d %s',
@@ -1004,7 +1004,7 @@ sub bombtter_publisher
 		my $status = undef;
 		if($enable_posting)
 		{
-			eval { $status = $twit_post->update(encode('utf8', $post)); };
+			eval { $status = $twit_post->update($post); };
 
 			logger('publisher', 'update main: code ' .
 								$twit_post->http_code . ' ' . $twit_post->http_message);
@@ -1041,9 +1041,9 @@ sub bombtter_publisher
 				for(my $try = 0; $try < 3; $try++)
 				{
 					eval {
-						$status = $twit2->update(encode('utf8',
+						$status = $twit2->update(
 							sprintf('%d,%d|%s|%s',
-								$bomb_result, $count, $trigger, $target_san)));
+								$bomb_result, $count, $trigger, $target_san));
 					};
 					logger('publisher', 'update raw: code ' .
 							$twit2->http_code . ' ' . $twit2->http_message);
@@ -1088,9 +1088,9 @@ sub bombtter_publisher
 		eval {
 			if($n_unposted >= 10)
 			{
-				my $status = $twit2->update(encode('utf8',
+				my $status = $twit2->update(
 					sprintf('【遅延】混雑度 %d',
-						int($n_unposted/10))));
+						int($n_unposted/10)));
 			}
 		};
 	}
