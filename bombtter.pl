@@ -182,8 +182,12 @@ sub bombtter_fetcher
 		}
 		elsif($source == 2)
 		{
-			$r = fetch_api($conf->{twitter}->{normal}->{username},
-						   $conf->{twitter}->{normal}->{password});
+			$r = fetch_api(
+				$conf->{twitter}->{normal}->{consumer_key},
+				$conf->{twitter}->{normal}->{consumer_secret},
+				$conf->{twitter}->{normal}->{access_token},
+				$conf->{twitter}->{normal}->{access_token_secret},
+			);
 			#&error if(!defined($r));
 			if(!defined($r))
 			{

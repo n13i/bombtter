@@ -20,8 +20,7 @@ use LWP::UserAgent;
 use Encode;
 use Web::Scraper;
 use URI;
-use Net::Twitter;
-#use Net::Twitter::Diff;
+use Net::Twitter::Lite;
 use YAML;
 use HTML::Entities;
 
@@ -539,14 +538,20 @@ sub _scrape_html_web_scraper
 
 sub fetch_api
 {
-	my $username = shift || return undef;
-	my $password = shift || return undef;
+	my $consumer_key = shift || return undef;
+	my $consumer_secret = shift || return undef;
+	my $access_token = shift || return undef;
+	my $access_token_secret = shift || return undef;
 
 	my $r_statuses = [];
 	my $earliest_status_id = 99999999999;
 
-	my $twit = Net::Twitter->new(username => $username, password => $password);
-	#my $twit = Net::Twitter::Diff->new(username => $username, password => $password);
+	my $twit = Net::Twitter::Lite->new(
+		consumer_key => $consumer_key,
+		consumer_secret => $consumer_secret,
+	);
+	$twit->access_token($access_token);
+	$twit->access_token_secret($access_token_secret);
 
 	#my $followers = $twit->followers();
 	#my $followers = $twit->xfollowers();
