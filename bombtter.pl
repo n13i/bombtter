@@ -902,7 +902,7 @@ sub bombtter_publisher
 			}
 			else
 			{
-				&error('failed to update: ' . Dump($twit_post->get_error));
+				&error('failed to update: ' . $@);
 			}
 
 # FIXME
@@ -1020,7 +1020,7 @@ sub bombtter_publisher
 			}
 			else
 			{
-				&error('failed to update: ' . Dump($twit_post->get_error));
+				&error('failed to update: ' . $@);
 			}
 
 			if($conf->{twitter_raw}->{enable})

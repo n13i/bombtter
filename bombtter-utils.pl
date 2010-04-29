@@ -52,8 +52,11 @@ sub update_location
 		my $s = $twitter->update(
 			sprintf('【更新】%s', $location));
 		print Dump($s);
-		print Dump($twitter->get_error);
 	};
+	if($@)
+	{
+		print "$@\n";
+	}
 }
 
 sub rate_limit_status
