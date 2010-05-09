@@ -887,22 +887,27 @@ sub bombtter_publisher
 #				$twit_post->http_code, $twit_post->http_message));
 #			logger('publisher', Dump($status));
 
-			if(!$@)
+			if($@)
 			{
-				logger('publisher', Dump($status));
-				# post 成功: bombs を UPDATE する
-				foreach(@posts)
+				if($@ ne 'Status is a duplicate.')
 				{
-					if($_->{proceeded} == 1)
-					{
-						$sth->execute($_->{result}, $_->{id});
-						$n_posted++;
-					}
+					logger('publisher', 'status duplicate, but continue');
+				}
+				else
+				{
+					&error('failed to update: ' . $@);
 				}
 			}
-			else
+
+			logger('publisher', Dump($status));
+			# post 成功: bombs を UPDATE する
+			foreach(@posts)
 			{
-				&error('failed to update: ' . $@);
+				if($_->{proceeded} == 1)
+				{
+					$sth->execute($_->{result}, $_->{id});
+					$n_posted++;
+				}
 			}
 
 # FIXME
@@ -1010,18 +1015,23 @@ sub bombtter_publisher
 #			logger('publisher', 'update main: code ' .
 #								$twit_post->http_code . ' ' . $twit_post->http_message);
 
-			if(!$@)
+			if($@)
 			{
-				logger('publisher', Dump($status));
+				if($@ ne 'Status is a duplicate.')
+				{
+					logger('publisher', 'status duplicate, but continue');
+				}
+				else
+				{
+					&error('failed to update: ' . $@);
+				}
+			}
 
-				# post 成功: bombs を UPDATE する
-				$sth->execute($bomb_result, $_->{'id'});
-				$n_posted++;
-			}
-			else
-			{
-				&error('failed to update: ' . $@);
-			}
+			logger('publisher', Dump($status));
+
+			# post 成功: bombs を UPDATE する
+			$sth->execute($bomb_result, $_->{'id'});
+			$n_posted++;
 
 			if($conf->{twitter_raw}->{enable})
 			{
