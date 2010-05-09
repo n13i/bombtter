@@ -889,10 +889,17 @@ sub bombtter_publisher
 
 			if($@)
 			{
-				logger('publisher', 'error: ' . $@->error);
-				if($@->error eq 'Status is a duplicate.')
+				logger('publisher', 'error: ' . $@);
+				if(blessed $@ && $@->isa('Net::Twitter::Lite::Error')
 				{
-					logger('publisher', 'status duplicate, but continue');
+					if($@->error eq 'Status is a duplicate.')
+					{
+						logger('publisher', 'status duplicate, but continue');
+					}
+					else
+					{
+						&error('failed to update');
+					}
 				}
 				else
 				{
