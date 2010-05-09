@@ -890,11 +890,15 @@ sub bombtter_publisher
 			if($@)
 			{
 				logger('publisher', 'error: ' . $@->error);
-				logger('publisher', 'code = ' . $@->code);
-				#logger('publisher', 'status duplicate, but continue');
-				&error('failed to update');
+				if($@->error eq 'Status is a duplicate.')
+				{
+					logger('publisher', 'status duplicate, but continue');
+				}
+				else
+				{
+					&error('failed to update');
+				}
 			}
-
 			logger('publisher', Dump($status));
 			# post 成功: bombs を UPDATE する
 			foreach(@posts)
@@ -1014,11 +1018,15 @@ sub bombtter_publisher
 			if($@)
 			{
 				logger('publisher', 'error: ' . $@->error);
-				logger('publisher', 'code = ' . $@->code);
-				#logger('publisher', 'status duplicate, but continue');
-				&error('failed to update');
+				if($@->error eq 'Status is a duplicate.')
+				{
+					logger('publisher', 'status duplicate, but continue');
+				}
+				else
+				{
+					&error('failed to update');
+				}
 			}
-
 			logger('publisher', Dump($status));
 
 			# post 成功: bombs を UPDATE する
