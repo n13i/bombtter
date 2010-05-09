@@ -890,23 +890,12 @@ sub bombtter_publisher
 			if($@)
 			{
 				logger('publisher', 'error: ' . $@);
-				if(blessed $@ && $@->isa('Net::Twitter::Lite::Error'))
-				{
-					if($@->error eq 'Status is a duplicate.')
-					{
-						logger('publisher', 'status duplicate, but continue');
-					}
-					else
-					{
-						&error('failed to update');
-					}
-				}
-				else
-				{
-					&error('failed to update');
-				}
+				# FIXME とりあえずエラーでもスルー
 			}
-			logger('publisher', Dump($status));
+			else
+			{
+				logger('publisher', Dump($status));
+			}
 			# post 成功: bombs を UPDATE する
 			foreach(@posts)
 			{
@@ -1024,17 +1013,13 @@ sub bombtter_publisher
 
 			if($@)
 			{
-				logger('publisher', 'error: ' . $@->error);
-				if($@->error eq 'Status is a duplicate.')
-				{
-					logger('publisher', 'status duplicate, but continue');
-				}
-				else
-				{
-					&error('failed to update');
-				}
+				logger('publisher', 'error: ' . $@);
+				# FIXME とりあえずエラーでもスルー
 			}
-			logger('publisher', Dump($status));
+			else
+			{
+				logger('publisher', Dump($status));
+			}
 
 			# post 成功: bombs を UPDATE する
 			$sth->execute($bomb_result, $_->{'id'});
