@@ -890,7 +890,7 @@ sub bombtter_publisher
 			if($@)
 			{
 				logger('publisher', 'error: ' . $@);
-				if(blessed $@ && $@->isa('Net::Twitter::Lite::Error')
+				if(blessed $@ && $@->isa('Net::Twitter::Lite::Error'))
 				{
 					if($@->error eq 'Status is a duplicate.')
 					{
