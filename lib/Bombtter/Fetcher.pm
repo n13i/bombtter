@@ -42,23 +42,28 @@ sub _urlencode
 sub fetch_rss
 {
 	my $service = shift || 'pcod';
+	my $query = shift || die;
+	my $filter = shift || die;
 
 	if($service eq '1x1')
 	{
-		return &_fetch_rss_1x1;
+		return &_fetch_rss_1x1($query, $filter);
 	}
 	elsif($service eq 'pcod')
 	{
-		return &_fetch_rss_pcod;
+		return &_fetch_rss_pcod($query, $filter);
 	}
 
-	return &_fetch_rss_official;
+	return &_fetch_rss_official($query, $filter);
 }
 
 sub _fetch_rss_1x1
 {
+	my $query = shift || die;
+	my $filter = shift || die;
+
 	my $uri = 'http://twitter.1x1.jp/rss/search/?keyword='
-			  . &_urlencode($SEARCH_KEYWORD)
+			  . &_urlencode($query)
 			  . '&text=1';
 
 	print "Twitter search RSS (1x1) ...\n";
@@ -71,13 +76,16 @@ sub _fetch_rss_1x1
 
 	$content = decode('utf8', $content);
 
-	return &_parse_rss_1x1($content);
+	return &_parse_rss_1x1($content, $filter);
 }
 
 sub _fetch_rss_pcod
 {
+	my $query = shift || die;
+	my $filter = shift || die;
+
 	my $uri = 'http://pcod.no-ip.org/yats/search?query='
-			  . &_urlencode($SEARCH_KEYWORD)
+			  . &_urlencode($query)
 			  . '&rss&fast';
 
 	print "Twitter search RSS (pcod) ...\n";
@@ -90,18 +98,22 @@ sub _fetch_rss_pcod
 
 	$content = decode('utf8', $content);
 
-	return &_parse_rss_pcod($content);
+	return &_parse_rss_pcod($content, $filter);
 }
 
 sub _fetch_rss_official
 {
+	my $query = shift || die;
+	my $filter = shift || die;
+
 	my $r = undef;
 	my $tmp = [];
 
+	# FIXME 3ページ固定
 	for(my $i = 1; $i <= 3; $i++)
 	{
 		my $uri = 'http://search.twitter.com/search.atom?q='
-				  . &_urlencode($SEARCH_KEYWORD)
+				  . &_urlencode($query)
 				  . '&page=' . $i;
 
 		printf "Twitter search RSS (official:%d) ...\n", $i;
@@ -114,7 +126,7 @@ sub _fetch_rss_official
 
 		$content = decode('utf8', $content);
 
-		$r = &_parse_rss_official($content, $tmp);
+		$r = &_parse_rss_official($content, $tmp, $filter);
 		$tmp = $r->{statuses};
 	}
 
@@ -182,6 +194,7 @@ sub read_html
 sub _parse_rss_1x1
 {
 	my $buf = shift || return undef;
+	my $filter = shift || return undef;
 
 	if($buf =~ m{<channel>(.+?)</channel>}msx)
 	{
@@ -210,6 +223,7 @@ sub _parse_rss_1x1
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
+				next if($status_text !~ /$filter/);
 
 				push(@$r_statuses, {
 					status_id    => $status_id,
@@ -243,6 +257,7 @@ sub _parse_rss_official
 {
 	my $buf = shift || return undef;
 	my $r_statuses = shift || [];
+	my $filter = shift || return undef;
 
 	if($buf =~ m{<feed(.+?)</feed>}msx)
 	{
@@ -294,7 +309,8 @@ sub _parse_rss_official
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
-				$status_text =~ s/<b>($SEARCH_KEYWORD)<\/b>/$1/g;
+				next if($status_text !~ /$filter/);
+				$status_text =~ s/<b>($filter)<\/b>/$1/g;
 
 				push(@$r_statuses, {
 					status_id    => $status_id,
@@ -328,6 +344,7 @@ sub _parse_rss_official
 sub _parse_rss_pcod
 {
 	my $buf = shift || return undef;
+	my $filter = shift || return undef;
 
 	if($buf =~ m{<feed(.+?)</feed>}msx)
 	{
@@ -365,6 +382,7 @@ sub _parse_rss_pcod
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
+				next if($status_text !~ /$filter/);
 
 				push(@$r_statuses, {
 					status_id    => $status_id,
