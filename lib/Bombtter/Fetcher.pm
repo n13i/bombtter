@@ -110,7 +110,7 @@ sub _fetch_rss_official
 	my $tmp = [];
 
 	# FIXME 3ページ固定
-	for(my $i = 1; $i <= 3; $i++)
+	for(my $i = 1; $i <= 1; $i++)
 	{
 		my $uri = 'http://search.twitter.com/search.atom?q='
 				  . &_urlencode($query)
