@@ -164,7 +164,7 @@ print FH <<EOM;
 
   <div id="footer">
     <address>
-      Generated at <?php echo strftime('%Y/%m/%d %H:%M:%S %z', filemtime(\$_ENV['SCRIPT_FILENAME'])); ?>
+      Generated at <?php echo strftime('%Y/%m/%d %H:%M:%S %z', filemtime(\$_SERVER['SCRIPT_FILENAME'])); ?>
     </address>
   </div>
 
