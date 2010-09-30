@@ -9,7 +9,7 @@ define('TWEETS_PER_PAGE', 20);
   <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
   <meta http-equiv="content-style-type" content="text/css"/>
   <meta name="robots" content="noindex,nofollow,noarchive"/>
-  <title>bombtter - bombcloud '<?=$title?>' :: labs.m2hq.net</title>
+  <title>bombtter - bombcloud '<?php echo $title; ?>' :: labs.m2hq.net</title>
   <link rel="stylesheet" type="text/css" href="http://labs.m2hq.net/css/default.css"/>
 </head>
 
@@ -30,11 +30,11 @@ define('TWEETS_PER_PAGE', 20);
  
   <div id="contents">
     <div id="bomb">
-      <div id="bomb_count"><?=$bombcount?></div>
+      <div id="bomb_count"><?php echo $bombcount; ?></div>
     </div>
-    <h1><?=$title?></h1>
+    <h1><?php echo $title; ?></h1>
     <p>
-      <?=$bombcount?> 回爆発しています。<br />
+      <?php echo $bombcount; ?> 回爆発しています。<br />
 <?php
 for($i = 0; $i < 5; $i++)
 {
@@ -89,7 +89,7 @@ for($i = 0; $i < TWEETS_PER_PAGE; $i++)
 if($page > 1)
 {
 ?>
-      <a rel="prev" href="?page=<?=($page-1)?>">Prev</a>
+      <a rel="prev" href="?page=<?php echo ($page-1); ?>">Prev</a>
 <?php
 }
 else
@@ -99,12 +99,12 @@ else
 <?php
 }
 ?>
-      <?=$page?> / <?=$page_last?>
+      <?php echo $page; ?> / <?php echo $page_last; ?>
 <?php
 if($page < $page_last)
 {
 ?>
-      <a rel="next" href="?page=<?=($page+1)?>">Next</a>
+      <a rel="next" href="?page=<?php echo ($page+1); ?>">Next</a>
 <?php
 }
 else
@@ -119,7 +119,7 @@ else
 
   <div id="footer">
     <address>
-      Generated at <?=strftime('%Y/%m/%d %H:%M:%S %z', filemtime($_ENV['SCRIPT_FILENAME']))?>
+      Generated at <?php echo strftime('%Y/%m/%d %H:%M:%S %z', filemtime($_ENV['SCRIPT_FILENAME'])); ?>
     </address>
   </div>
 
