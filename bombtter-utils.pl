@@ -21,6 +21,7 @@ my $twitter = Net::Twitter::Lite->new(
 my %func = (
 	update_location => \&update_location,
 	rate_limit_status => \&rate_limit_status,
+	replies => \&replies,
 	oauth => \&oauth,
 );
 
@@ -65,6 +66,15 @@ sub rate_limit_status
 
 	&_do_auth($account);
 	my $r = $twitter->rate_limit_status;
+	print Dump($r);
+}
+
+sub replies
+{
+	my $account = shift || 'normal';
+
+	&_do_auth($account);
+	my $r = $twitter->replies;
 	print Dump($r);
 }
 
