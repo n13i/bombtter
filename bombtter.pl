@@ -140,7 +140,7 @@ sub bombtter_fetcher
 
 	my $try = 0;
 	my $try_max = 5;
-	my $remote_earliest_status_id = 99999999999;
+	my $remote_earliest_status_id = 9223372036854775807; # I64_MAX
 	my $inserted = 0;
 
 	# リモートの(1ページの)一番古い番号がローカルの一番新しい番号より大きければ
