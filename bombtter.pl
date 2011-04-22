@@ -72,7 +72,7 @@ if($mode eq 'auto')
 	else
 	{
 		$mode		   = 'post';
-		$post_source   = 1;     # followers only
+		$post_source   = -1;     # followers only
 	}
 	if($min % 6 == 0)
 	{
