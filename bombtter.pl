@@ -49,6 +49,7 @@ if($scrape_source > $#source_name || $scrape_source < -1 ||
 {
 	&error("invalid source\n");
 }
+my $post_category = $ARGV[3] || -1;
 
 if($mode eq 'auto')
 {
@@ -72,6 +73,14 @@ if($mode eq 'auto')
 	{
 		$mode		   = 'post';
 		$post_source   = 1;     # followers only
+	}
+	if($min % 6 == 0)
+	{
+		$post_category = 0;
+	}
+	elsif($min % 6 == 3)
+	{
+		$post_category = 1;
 	}
 }
 
@@ -97,10 +106,9 @@ if($mode eq 'fetch' || $mode eq 'both')
 }
 if($mode eq 'post' || $mode eq 'both')
 {
-	my @categories = (0, 1);
-	foreach(@categories)
+	if($post_category != -1)
 	{
-		&bombtter_publisher($conf, $dbh, $post_source, $_);
+		&bombtter_publisher($conf, $dbh, $post_source, $post_category);
 	}
 }
 
