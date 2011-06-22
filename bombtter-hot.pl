@@ -25,7 +25,7 @@ my $shortterm_hours = 3;
 my $dt_now = DateTime->now(time_zone => '+0000');
 #$dt_now->subtract(hours => 28);
 
-my $twit = Net::Twitter->new(
+my $twit = Net::Twitter::Lite->new(
     consumer_key => $conf->{twitter}->{consumer_key},
     consumer_secret => $conf->{twitter}->{consumer_secret},
 );
