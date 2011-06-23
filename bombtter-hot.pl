@@ -106,8 +106,8 @@ foreach my $st (@shortterm)
         }
     }
     printf "L:%3d(%.4f)/S:%3d(%.4f)\t%s\n", $count_lt, $level_lt, $count_st, $level_st, $st->{target};
-    #if($level_st > $level_lt && $count_st >= 3)
-    if($count_st >= 3)
+    #if($count_st >= 3)
+    if($level_st > $level_lt && $count_st >= 3)
     {
         push(@buzz, $st);
     }

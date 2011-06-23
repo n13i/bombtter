@@ -43,7 +43,7 @@ sub set_terminal_encoding
 sub db_connect
 {
 	my $conf = shift || return undef;
-	my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{db}->{main}, '', '', {unicode => 1});
+	my $dbh = DBI->connect('dbi:SQLite:dbname=' . $conf->{db}->{main}, '', '', {sqlite_unicode => 1});
 	return $dbh;
 }
 
