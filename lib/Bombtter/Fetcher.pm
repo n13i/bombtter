@@ -264,14 +264,14 @@ sub _parse_rss_official
 		my $feed = $1;
 
 		#my $r_statuses = [];
-		my $earliest_status_id = 99999999999;
+		my $earliest_status_id = 9223372036854775807;
 
 		foreach($feed =~ m{<entry>(.+?)</entry>}gmsx)
 		{
 			my ($name, $screen_name, $status_text, $permalink, $status_id, $source);
 
 			$_ = decode_entities($_);
-
+			print;
 # <entry>
 #   <id>tag:search.twitter.com,2005:5282870124</id>
 #   <published>2009-10-30T08:50:06Z</published>
@@ -294,8 +294,8 @@ sub _parse_rss_official
 				<link\stype="text/html"\shref="http\://twitter\.com/[^/]+/status(?:es)?/(\d+)"[^>]*>.+?
 				<content\stype="html">(.+?)</content>.+?
 				<twitter\:source>(.+?)</twitter\:source>.+?
-				<author>.+?<name>(.+?)</name>.+?
-				<uri>http\://twitter\.com\/([^<]+)</uri>.+?</author>
+				<author>.*<name>(.+?)</name>.*
+				<uri>http\://twitter\.com\/([^<]+)</uri>.*</author>
 				}msx)
 			{
 				$status_id = $1;
