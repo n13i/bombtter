@@ -271,7 +271,7 @@ sub _parse_rss_official
 			my ($name, $screen_name, $status_text, $permalink, $status_id, $source);
 
 			$_ = decode_entities($_);
-			print;
+			#print;
 # <entry>
 #   <id>tag:search.twitter.com,2005:5282870124</id>
 #   <published>2009-10-30T08:50:06Z</published>
@@ -309,6 +309,7 @@ sub _parse_rss_official
 				$permalink = 'http://twitter.com/' . $screen_name_noat . '/statuses/' . $status_id;
 
 				$status_text = &_normalize_status_text($status_text);
+				$status_text =~ s/<\/?em>//g;
 				next if($status_text !~ /$filter/);
 				$status_text =~ s/<b>($filter)<\/b>/$1/g;
 
