@@ -605,7 +605,7 @@ sub bombtter_publisher
 		$sql .= 'AND source = ' . $limit_source . ' ';
 	}
 	$sql .= 'AND category = ' . $category . ' ';
-	$sql .= 'ORDER BY urgency DESC, LENGTH(target) DESC, status_id ASC LIMIT ?';
+	$sql .= 'ORDER BY urgency DESC, LENGTH(target) DESC, status_id DESC LIMIT ?';
 	my $sth = $dbh->prepare($sql);
 
 	$sth->execute($limit);
