@@ -489,8 +489,19 @@ sub bombtter_publisher
 	my $sql;
 
 	# 時には自重する
-	if($dt_local_now->month == 8 &&
-	   ($dt_local_now->day == 6  || $dt_local_now->day == 9))
+	if(
+		(
+			$dt_local_now->month == 8 &&
+			($dt_local_now->day == 6  || $dt_local_now->day == 9)
+		) || (
+			$dt_local_now->month == 3 &&
+			$dt_local_now->day == 11 &&
+			(
+				($dt_local_now->hour == 14 && $dt_local_now->minute >= 46) ||
+				$dt_local_now->hour >= 15
+			)
+		)
+	)
 	{
 		logger('publisher', 'take-care-of-myself mode activated');
 		my $sth_takecare = $dbh->prepare(
