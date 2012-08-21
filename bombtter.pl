@@ -823,15 +823,15 @@ sub bombtter_publisher
 					$targets{$t}->{count_now};
 				if($targets{$t}->{count_target} == 1)
 				{
-					$count_str .= sprintf ',%d回目',
-						$targets{$t}->{count_total};
+#					$count_str .= sprintf ',%d回目',
+#						$targets{$t}->{count_total};
 				}
 				$count_str .= ')';
 			}
 			elsif($targets{$t}->{count_target} == 1)
 			{
-				$count_str .= sprintf '(%d回目)',
-					$targets{$t}->{count_total};
+#				$count_str .= sprintf '(%d回目)',
+#					$targets{$t}->{count_total};
 			}
 
 			if($#target_keys >= 1)
@@ -1002,7 +1002,7 @@ sub bombtter_publisher
 			$count = $ary->{count}+1;
 			if($target =~ /$count_target_expr/i && $count > 1)
 			{
-				$post .= '(' . $count . '回目)';
+#				$post .= '(' . $count . '回目)';
 			}
 		}
 
