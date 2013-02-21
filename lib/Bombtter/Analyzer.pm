@@ -208,7 +208,7 @@ sub analyze
 		# 表層形と品詞を文末の単語から順に @sentence へ
 		my @sentence = ();
 		my $mecab = new MeCab::Tagger($mecab_opts);
-		my $node = $mecab->parseToNode(encode($mecab_dic_encoding, $object));
+		my $node = $mecab->parseToNode($object);
 		$node = $node->{next};
 		while($node->{next})
 		{
