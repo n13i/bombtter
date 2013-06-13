@@ -42,7 +42,7 @@ my $dt_local_now = $dt_now->clone->set_time_zone('+0900');
 
 my $mode = $ARGV[0];
 
-my $scrape_source = $ARGV[1] || 0;
+my $scrape_source = $ARGV[1] || 2; # API search mode
 my $post_source   = $ARGV[2] || -1;
 if($scrape_source > $#source_name || $scrape_source < -1 ||
    $post_source > $#source_name || $post_source < -1)
@@ -59,14 +59,14 @@ if($mode eq 'auto')
 	if($min % ($conf->{automode_search_interval} || 20) == 0)
 	{
 		$mode		   = 'both';
-		$scrape_source = 0;      # search only
+		#$scrape_source = 0;      # search only
 		$post_source   = -1;     # search + followers
 	}
 	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
 	{
 		$mode		   = 'both';
 		#$scrape_source = 1;      # IM only
-		$scrape_source = 2;      # API only
+		#$scrape_source = 2;      # API only
 		$post_source   = -1;     # search + followers
 	}
 	else

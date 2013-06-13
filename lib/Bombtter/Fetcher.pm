@@ -478,82 +478,6 @@ sub _scrape_html_regexp
 	}
 }
 
-=comment
-sub _scrape_html_web_scraper
-{
-	my $html = shift || return undef;
-
-	my $earliest_status_id = 99999999999;
-
-	my $trimmed_text = [ 'TEXT', sub { s/^\s*(.+?)\s*$/$1/ } ];
-	my $list = scraper {
-		process 'table.list tbody tr',
-				'statuses[]' => scraper {
-					process 'td:nth-child(1) a',
-					'twiturl_home' => '@href';
-					process 'td:nth-child(1) a img',
-							'profile_image_url' => '@src',
-							'description' => '@alt';
-
-					process 'td:nth-child(2)',
-							'name' => [ 'TEXT', sub { s/^\s*(.+?)\s+\@[^@]+$/$1/ } ];
-					process 'td:nth-child(2) a',
-							'screen_name' => $trimmed_text;
-
-					# FIXME リンク除去等の処理が必要
-					process 'td:nth-child(3)',
-							'status_text' => $trimmed_text;
-
-					process 'td:nth-child(4) a',
-							'url' => '@href';
-
-					process 'td:nth-child(5) a',
-							'twiturl' => '@href',
-							'status_id' => [ '@href', sub { s/^.+?\/statuses\/(\d+)$/$1/ } ];
-
-					process 'td:nth-child(6)',
-							'from' => 'HTML';
-
-					process 'td:nth-child(7)',
-							'timestamp' => $trimmed_text;
-
-					result 'twiturl_home', 'profile_image_url', 'description',
-						   'name', 'screen_name',
-						   'status_text',
-						   'url',
-						   'permalink', 'status_id',
-						   'from',
-						   'timestamp';
-				};
-
-		result 'statuses';
-	};
-
-	my $r_statuses = $list->scrape($html);
-	#use YAML;
-	#print Dump($r_statuses);
-
-	if($#$r_statuses == -1)	
-	{
-		print "empty list: maybe scraping error?\n";
-		return undef;
-	}
-
-	foreach(@$r_statuses)
-	{
-		if($_->{'status_id'} < $earliest_status_id)
-		{
-			$earliest_status_id = $_->{'status_id'};
-		}
-	}
-
-	return {
-		'earliest_status_id' => $earliest_status_id,
-		'statuses' => $r_statuses,
-	};
-}
-=cut
-
 sub fetch_api
 {
 	my $consumer_key = shift || return undef;
@@ -562,73 +486,34 @@ sub fetch_api
 	my $access_token_secret = shift || return undef;
 
 	my $r_statuses = [];
-	my $earliest_status_id = 99999999999;
+	my $earliest_status_id = 9223372036854775807;
 
-	my $twit = Net::Twitter::Lite->new(
+	my $twit = Net::Twitter::Lite::WithAPIv1_1->new(
 		consumer_key => $consumer_key,
 		consumer_secret => $consumer_secret,
 	);
 	$twit->access_token($access_token);
 	$twit->access_token_secret($access_token_secret);
 
-	#my $followers = $twit->followers();
-	#my $followers = $twit->xfollowers();
-	#my $followers = [];
-	#if(!defined($followers))
-	#{
-	#	print "can't get followers\n";
-	#	return undef;
-	#}
-
-	my $replies = $twit->replies();
-	if(!defined($replies))
+	my $r = undef;
+	eval {
+		$r = $twit->search($SEARCH_KEYWORD);
+		if(!defined($r))
+		{
+			printf "can't get search results: code %d %s\n",
+				$twit->http_code, $twit->http_message;
+			print Dump($twit->get_error);
+			return undef;
+		}
+		printf "got %d results\n", $#{$r->{results}}+1;
+	};
+	if($@)
 	{
-		printf "can't get replies: code %d %s\n",
-			$twit->http_code, $twit->http_message;
-		print Dump($twit->get_error);
+	    printf "can't get search results\n";
 		return undef;
 	}
-	#printf "%s has %d followers, got %d replies\n", $username, $#{$followers}+1, $#{$replies}+1;
-	printf "got %d replies\n", $#{$replies}+1;
 
-=comment
-	foreach(@$followers)
-	{
-		last if(ref($_) ne 'HASH');
-
-		my $is_protected = 0;
-		if($_->{protected})
-		{
-			#print $_->{screen_name} . " is protected; skip.\n";
-			#next;
-			$is_protected = 1;
-		}
-
-		if($_->{status}->{text} !~ /$SEARCH_KEYWORD/)
-		{
-			next;
-		}
-
-		my $status_id   = $_->{status}->{id};
-		my $screen_name = '@' . $_->{screen_name};
-		my $name        = $_->{name};
-		my $permalink   = 'http://twitter.com/' . $_->{screen_name} . '/statuses/' . $status_id;
-		my $status_text = $_->{status}->{text};
-
-		$status_text = &_normalize_status_text($status_text);
-
-		push(@$r_statuses, {
-			status_id    => $status_id,
-			permalink    => $permalink,
-			name         => $name,
-			screen_name  => $screen_name,
-			status_text  => $status_text,
-			is_protected => $is_protected,
-		});
-	}
-=cut
-
-	foreach(@$replies)
+	foreach(@{$r->{results}})
 	{
 		last if(ref($_) ne 'HASH');
 
@@ -648,7 +533,7 @@ sub fetch_api
 		my $status_id   = $_->{id};
 		my $screen_name = '@' . $_->{user}->{screen_name};
 		my $name        = $_->{user}->{name};
-		my $permalink   = 'http://twitter.com/' . $_->{user}->{screen_name} . '/statuses/' . $status_id;
+		my $permalink   = 'http://twitter.com/' . $_->{user}->{screen_name} . '/status/' . $status_id;
 		my $status_text = $_->{text};
 		my $source      = $_->{source};
 
@@ -670,37 +555,6 @@ sub fetch_api
 		if($_->{status_id} < $earliest_status_id)
 		{
 			$earliest_status_id = $_->{status_id};
-		}
-	}
-
-	return {
-		'earliest_status_id' => $earliest_status_id,
-		'statuses' => $r_statuses,
-	};
-}
-
-sub fetch_im
-{
-	my $dbfile = shift || return undef;
-	my $timeout = shift || 5000;
-
-	my $r_statuses = [];
-	my $earliest_status_id = 99999999999;
-
-	my $dbh = DBI->connect(
-		'dbi:SQLite:dbname=' . $dbfile, '', '', {unicode => 1});
-	$dbh->func($timeout, 'busy_timeout');
-
-	my $sth = $dbh->prepare(
-		'SELECT status_id, permalink, name, screen_name, status_text, is_protected ' .
-		'FROM statuses ORDER BY status_id DESC LIMIT ?');
-	$sth->execute(30);
-	while(my $status = $sth->fetchrow_hashref)
-	{
-		push(@$r_statuses, $status);
-		if($status->{status_id} < $earliest_status_id)
-		{
-			$earliest_status_id = $status->{status_id};
 		}
 	}
 
