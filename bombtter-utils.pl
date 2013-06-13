@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use utf8;
 
-use Net::Twitter::Lite;
+use Net::Twitter::Lite::WithAPIv1_1;
 use Encode;
 use YAML;
 
@@ -13,7 +13,7 @@ use Bombtter;
 my $conf = load_config or &error('load_config failed');
 set_terminal_encoding($conf);
 
-my $twitter = Net::Twitter::Lite->new(
+my $twitter = Net::Twitter::Lite::WithAPIv1_1->new(
 	consumer_key => $conf->{twitter}->{consumer_key},
 	consumer_secret => $conf->{twitter}->{consumer_secret},
 );

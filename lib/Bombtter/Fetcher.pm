@@ -20,7 +20,6 @@ use LWP::UserAgent;
 use Encode;
 use Web::Scraper;
 use URI;
-use Net::Twitter::Lite;
 use YAML;
 use HTML::Entities;
 

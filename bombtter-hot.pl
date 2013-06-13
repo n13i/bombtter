@@ -4,7 +4,7 @@ use strict;
 use utf8;
 
 use DateTime;
-use Net::Twitter::Lite;
+use Net::Twitter::Lite::WithAPIv1_1;
 use Encode;
 use YAML;
 
@@ -25,7 +25,7 @@ my $shortterm_hours = 3;
 my $dt_now = DateTime->now(time_zone => '+0000');
 #$dt_now->subtract(hours => 28);
 
-my $twit = Net::Twitter::Lite->new(
+my $twit = Net::Twitter::Lite::WithAPIv1_1->new(
     consumer_key => $conf->{twitter}->{consumer_key},
     consumer_secret => $conf->{twitter}->{consumer_secret},
 );

@@ -8,7 +8,7 @@ use warnings;
 use strict;
 use utf8;
 
-use Net::Twitter::Lite;
+use Net::Twitter::Lite::WithAPIv1_1;
 use Encode;
 use Jcode;
 use YAML;  # for YAML::Dump
@@ -888,7 +888,7 @@ sub bombtter_publisher
 
 		# 投稿処理
 
-		my $twit_post = Net::Twitter::Lite->new(
+		my $twit_post = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
 			consumer_secret => $conf->{twitter}->{consumer_secret}
 		);
@@ -980,7 +980,7 @@ sub bombtter_publisher
 		logger('publish', sprintf('using account %s for %s target',
 			$conf->{twitter}->{$lb_target}->{username}, $lb_target));
 
-		my $twit_post = Net::Twitter::Lite->new(
+		my $twit_post = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
 			consumer_secret => $conf->{twitter}->{consumer_secret},
 		);
@@ -1050,7 +1050,7 @@ sub bombtter_publisher
 
 			if($conf->{twitter_raw}->{enable})
 			{
-				my $twit2 = Net::Twitter::Lite->new(
+				my $twit2 = Net::Twitter::Lite::WithAPIv1_1->new(
 					consumer_key => $conf->{twitter}->{consumer_key},
 					consumer_secret => $conf->{twitter}->{consumer_secret}
 				);
@@ -1104,7 +1104,7 @@ sub bombtter_publisher
 		my $hashref = $dbh->selectrow_hashref($sql);
 		my $n_unposted = $hashref->{count};
 
-		my $twit2 = Net::Twitter::Lite->new(
+		my $twit2 = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
 			consumer_secret => $conf->{twitter}->{consumer_secret}
 		);
