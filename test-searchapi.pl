@@ -13,8 +13,6 @@ use Bombtter::Fetcher;
 my $conf = load_config or die('load_config failed');
 set_terminal_encoding($conf);
 
-my $key = $ARGV[0] || die;
-
 my $r = fetch_api(
 	$conf->{twitter}->{consumer_key},
 	$conf->{twitter}->{consumer_secret},

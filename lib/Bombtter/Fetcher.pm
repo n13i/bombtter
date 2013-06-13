@@ -22,6 +22,7 @@ use Web::Scraper;
 use URI;
 use YAML;
 use HTML::Entities;
+use Net::Twitter::Lite::WithAPIv1_1;
 
 my $OFFSET_MAX = 5;
 my $SEARCH_KEYWORD = '爆発しろ';
@@ -497,7 +498,12 @@ sub fetch_api
 
 	my $r = undef;
 	eval {
-		$r = $twit->search($SEARCH_KEYWORD);
+		$r = $twit->search({
+			q => &_urlencode($SEARCH_KEYWORD),
+			locale => 'ja',
+			count => 100,
+			result_type => 'recent',
+		});
 		if(!defined($r))
 		{
 			printf "can't get search results: code %d %s\n",
@@ -505,7 +511,7 @@ sub fetch_api
 			print Dump($twit->get_error);
 			return undef;
 		}
-		printf "got %d results\n", $#{$r->{results}}+1;
+		printf "got %d results\n", $#{$r->{statuses}}+1;
 	};
 	if($@)
 	{
@@ -513,7 +519,7 @@ sub fetch_api
 		return undef;
 	}
 
-	foreach(@{$r->{results}})
+	foreach(@{$r->{statuses}})
 	{
 		last if(ref($_) ne 'HASH');
 
