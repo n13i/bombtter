@@ -56,24 +56,26 @@ if($mode eq 'auto')
 	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
 		localtime(time);
 	print $min . "\n";
-	if($min % ($conf->{automode_search_interval} || 20) == 0)
-	{
-		$mode		   = 'both';
-		#$scrape_source = 0;      # search only
-		$post_source   = -1;     # search + followers
-	}
-	elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
-	{
-		$mode		   = 'both';
-		#$scrape_source = 1;      # IM only
-		#$scrape_source = 2;      # API only
-		$post_source   = -1;     # search + followers
-	}
-	else
-	{
-		$mode		   = 'post';
-		$post_source   = -1;     # followers only
-	}
+	#if($min % ($conf->{automode_search_interval} || 20) == 0)
+	#{
+	#	$mode		   = 'both';
+	#	#$scrape_source = 0;      # search only
+	#	$post_source   = -1;     # search + followers
+	#}
+	#elsif($min % ($conf->{automode_followers_interval} || 10) == 0)
+	#{
+	#	$mode		   = 'both';
+	#	#$scrape_source = 1;      # IM only
+	#	#$scrape_source = 2;      # API only
+	#	$post_source   = -1;     # search + followers
+	#}
+	#else
+	#{
+	#	$mode		   = 'post';
+	#	$post_source   = -1;     # followers only
+	#}
+	$mode		   = 'both';
+	$post_source   = -1;
 	if($min % 6 == 0)
 	{
 		$post_category = 0;
@@ -382,10 +384,10 @@ sub bombtter_analyzer
 			}
 
 			# 短い物を先に処理
-			if(length($bombed) <= 5)
-			{
-				$urgency++;
-			}
+#			if(length($bombed) <= 5)
+#			{
+#				$urgency++;
+#			}
 
 			foreach my $expr (@urgent_keywords)
 			{
@@ -890,7 +892,8 @@ sub bombtter_publisher
 
 		my $twit_post = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
-			consumer_secret => $conf->{twitter}->{consumer_secret}
+			consumer_secret => $conf->{twitter}->{consumer_secret},
+			ssl => 1,
 		);
 		$twit_post->access_token(
 			$conf->{twitter}->{normal}->{access_token});
@@ -983,6 +986,7 @@ sub bombtter_publisher
 		my $twit_post = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
 			consumer_secret => $conf->{twitter}->{consumer_secret},
+			ssl => 1,
 		);
 		$twit_post->access_token(
 			$conf->{twitter}->{$lb_target}->{access_token});
@@ -1052,7 +1056,8 @@ sub bombtter_publisher
 			{
 				my $twit2 = Net::Twitter::Lite::WithAPIv1_1->new(
 					consumer_key => $conf->{twitter}->{consumer_key},
-					consumer_secret => $conf->{twitter}->{consumer_secret}
+					consumer_secret => $conf->{twitter}->{consumer_secret},
+					ssl => 1,
 				);
 				$twit2->access_token(
 					$conf->{twitter}->{raw}->{access_token});
@@ -1106,7 +1111,8 @@ sub bombtter_publisher
 
 		my $twit2 = Net::Twitter::Lite::WithAPIv1_1->new(
 			consumer_key => $conf->{twitter}->{consumer_key},
-			consumer_secret => $conf->{twitter}->{consumer_secret}
+			consumer_secret => $conf->{twitter}->{consumer_secret},
+			ssl => 1,
 		);
 		$twit2->access_token(
 			$conf->{twitter}->{status}->{access_token});
