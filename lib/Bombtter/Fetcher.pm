@@ -492,6 +492,7 @@ sub fetch_api
 	my $twit = Net::Twitter::Lite::WithAPIv1_1->new(
 		consumer_key => $consumer_key,
 		consumer_secret => $consumer_secret,
+		ssl => 1,
 	);
 	$twit->access_token($access_token);
 	$twit->access_token_secret($access_token_secret);
@@ -529,6 +530,15 @@ sub fetch_api
 			#print $_->{user}->{screen_name} . " is protected; skip.\n";
 			#next;
 			$is_protected = 1;
+		}
+
+		# premature user check (2013/09/15)
+		if($_->{user}->{statuses_count} < 30 ||
+		   $_->{user}->{followers_count} < 20)
+		{
+			printf "user %s seems premature, skip.\n",
+				$_->{user}->{screen_name};
+			next;
 		}
 
 		if($_->{text} !~ /$SEARCH_KEYWORD/)
