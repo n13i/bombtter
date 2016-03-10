@@ -15,12 +15,12 @@ use Bombtter;
 my $conf = load_config;
 set_terminal_encoding($conf);
 
-my $thresh = $ARGV[0] || 1;
+my $dry_run = $ARGV[0] || 0;
 
 my $dbh = db_connect($conf);
 
 my $longterm_days = 7;
-my $shortterm_hours = 3;
+my $shortterm_hours = $conf->{hotbomb_shortterm_hours};
 
 my $dt_now = DateTime->now(time_zone => '+0000');
 #$dt_now->subtract(hours => 28);
@@ -28,6 +28,7 @@ my $dt_now = DateTime->now(time_zone => '+0000');
 my $twit = Net::Twitter::Lite::WithAPIv1_1->new(
     consumer_key => $conf->{twitter}->{consumer_key},
     consumer_secret => $conf->{twitter}->{consumer_secret},
+    ssl => 1,
 );
 $twit->access_token(
     $conf->{twitter}->{normal}->{access_token});
@@ -60,11 +61,15 @@ if($latest_bombed->{ctime} =~ /(\d{4})\-(\d{2})\-(\d{2})\s(\d{2})\:(\d{2})\:(\d{
 my $dt_from = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 my $dt_to = $dt_now->clone->add(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 
-my $sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE result >= 0 AND ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
+my $sth = $dbh->prepare('SELECT COUNT(LOWER(target_normalized)) as count, target_normalized as target FROM bombs WHERE result >= 0 AND ctime > ? AND ctime <= ? GROUP BY LOWER(target_normalized) ORDER BY count DESC');
 $sth->execute($dt_from, $dt_to);
 my @shortterm = ();
 while(my $row = $sth->fetchrow_hashref)
 {
+    if($dry_run == 1)
+    {
+        printf "hot: short-term count=%3d %s\n", $row->{count}, $row->{target};
+    }
     push(@shortterm, $row);
 }
 $sth->finish;
@@ -75,11 +80,15 @@ $sth->finish;
 $dt_from = $dt_now->clone->subtract(days => $longterm_days)->strftime('%Y-%m-%d %H:%M:%S');
 $dt_to = $dt_now->clone->subtract(hours => $shortterm_hours)->strftime('%Y-%m-%d %H:%M:%S');
 
-$sth = $dbh->prepare('SELECT COUNT(target) as count, LOWER(target) as target FROM bombs WHERE result >= 0 AND ctime > ? AND ctime <= ? GROUP BY target ORDER BY LOWER(count) DESC');
+$sth = $dbh->prepare('SELECT COUNT(LOWER(target_normalized)) as count, target_normalized as target FROM bombs WHERE result >= 0 AND ctime > ? AND ctime <= ? GROUP BY LOWER(target_normalized) ORDER BY count DESC');
 $sth->execute($dt_from, $dt_to);
 my @longterm = ();
 while(my $row = $sth->fetchrow_hashref)
 {
+    if($dry_run == 1)
+    {
+        printf "hot: long-term  count=%3d %s\n", $row->{count}, $row->{target};
+    }
     push(@longterm, $row);
 }
 $sth->finish;
@@ -97,7 +106,9 @@ foreach my $st (@shortterm)
 
     foreach my $lt (@longterm)
     {
-        if($st->{target} eq $lt->{target})
+        next if(!defined($st->{target}));
+
+        if(lc($st->{target}) eq lc($lt->{target}))
         {
             $count_lt = $lt->{count};
             # 最近一週間の 1 日平均
@@ -105,9 +116,13 @@ foreach my $st (@shortterm)
             last;
         }
     }
-    printf "L:%3d(%.4f)/S:%3d(%.4f)\t%s\n", $count_lt, $level_lt, $count_st, $level_st, $st->{target};
+    my $chk_level = ($level_st > $level_lt) ? 1 : 0;
+    my $chk_count = ($count_st >= 3) ? 1 : 0;
+    #printf "L:%3d(%.4f)/S:%3d(%.4f)\t%s\n", $count_lt, $level_lt, $count_st, $level_st, $st->{target};
+    printf "hot: level_st=%.4f %s level_lt=%.4f / count_st=%3d %s 3 / count_lt=%3d :\t%s\n",
+        $level_st, (($chk_level == 1) ? '> ' : '<='), $level_lt, $count_st, (($chk_count == 1) ? '>=' : '< '), $count_lt, $st->{target};
     #if($count_st >= 3)
-    if($level_st > $level_lt && $count_st >= 3)
+    if($chk_level == 1 && $chk_count == 1)
     {
         push(@buzz, $st);
     }
@@ -137,7 +152,7 @@ foreach my $b (@buzz)
     my $found = 0;
     foreach my $d (@buzz_on_db)
     {
-        if($b->{target} eq $d->{target})
+        if(lc($b->{target}) eq lc($d->{target}))
         {
             # 既に buzz ってる
             $found = 1;
@@ -154,12 +169,18 @@ foreach my $b (@buzz)
     		{
                 my $status;
                 eval {
-    				$status = $twit->update(
-    					sprintf('HOT: %s', $b->{target}));
+                    if($dry_run == 0)
+                    {
+                        $status = $twit->update(
+                                sprintf('HOT: %s', $b->{target}));
+                    }
                 };
 				if(!$@)
 				{
-	        		$sth->execute($b->{target});
+                    if($dry_run == 0)
+                    {
+	        		    $sth->execute($b->{target});
+                    }
 				}
 				else
 				{
@@ -168,7 +189,10 @@ foreach my $b (@buzz)
 			}
 			else
 			{
-				$sth->execute($b->{target});
+                if($dry_run == 0)
+                {
+                    $sth->execute($b->{target});
+                }
 			}
 		}
     }
@@ -185,7 +209,7 @@ foreach my $b (@buzz_on_db)
     my $found = 0;
     foreach my $st (@shortterm)
     {
-        if($b->{target} eq $st->{target})
+        if(lc($b->{target}) eq lc($st->{target}))
         {
             # まだ短期間中に爆発要求されている
             $found = 1;
@@ -195,7 +219,10 @@ foreach my $b (@buzz_on_db)
 
     if($found == 0)
     {
-        $sth->execute($b->{id});
+        if($dry_run == 0)
+        {
+            $sth->execute($b->{id});
+        }
         logger('hot', '  ' . $b->{target});
     }
 }

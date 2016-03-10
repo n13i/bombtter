@@ -364,10 +364,22 @@ sub bombtter_analyzer
 
 		if(defined($bombed))
 		{
-			$bombed_normalized = decode('utf8',
-				Jcode->new(encode('utf8', $bombed))->h2z->utf8);
+			#$bombed_normalized = decode('utf8',
+			#	Jcode->new(encode('utf8', $bombed))->h2z->utf8);
 			$bombed_normalized =~ tr/Ａ-Ｚａ-ｚ０-９/A-Za-z0-9/;
 	
+			# パターンマッチによる正規化処理
+			foreach my $pattern (@{$conf->{target_normalizer}})
+			{
+				my $expr = $pattern->{match_expr};
+				if($bombed_normalized =~ /$expr/i)
+				{
+					$bombed_normalized = $pattern->{normalize};
+				}
+			}
+
+			logger('analyzer', sprintf("bombed_normalized: [%s]", $bombed_normalized));
+
 			# 緊急度とカテゴリを決定
 			my $urgency = 0;
 			my $category = 0;
