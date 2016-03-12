@@ -85,6 +85,8 @@ $sth->execute($dt_from, $dt_to);
 my @longterm = ();
 while(my $row = $sth->fetchrow_hashref)
 {
+    next if(!defined($row->{target}));
+
     if($dry_run == 1)
     {
         printf "hot: long-term  count=%3d %s\n", $row->{count}, $row->{target};
@@ -106,7 +108,7 @@ foreach my $st (@shortterm)
 
     foreach my $lt (@longterm)
     {
-        next if(!defined($st->{target}));
+        next if(!defined($st->{target}) || !defined($lt->{target}));
 
         if(lc($st->{target}) eq lc($lt->{target}))
         {
@@ -118,11 +120,12 @@ foreach my $st (@shortterm)
     }
     my $chk_level = ($level_st > $level_lt) ? 1 : 0;
     my $chk_count = ($count_st >= 3) ? 1 : 0;
+    my $chk_impulse = (($level_st / $shortterm_hours) > $conf->{hotbomb_impulse_level}) ? 1 : 0;
     #printf "L:%3d(%.4f)/S:%3d(%.4f)\t%s\n", $count_lt, $level_lt, $count_st, $level_st, $st->{target};
-    printf "hot: level_st=%.4f %s level_lt=%.4f / count_st=%3d %s 3 / count_lt=%3d :\t%s\n",
-        $level_st, (($chk_level == 1) ? '> ' : '<='), $level_lt, $count_st, (($chk_count == 1) ? '>=' : '< '), $count_lt, $st->{target};
+    printf "hot: chk_impulse=%d level_st=%.4f %s level_lt=%.4f / count_st=%3d %s 3 / count_lt=%3d :\t%s\n",
+        $chk_impulse, $level_st, (($chk_level == 1) ? '> ' : '<='), $level_lt, $count_st, (($chk_count == 1) ? '>=' : '< '), $count_lt, $st->{target};
     #if($count_st >= 3)
-    if($chk_level == 1 && $chk_count == 1)
+    if(($chk_level == 1 && $chk_count == 1) || $chk_impulse == 1)
     {
         push(@buzz, $st);
     }
