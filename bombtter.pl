@@ -573,9 +573,11 @@ sub bombtter_publisher
 		my $target = $dbh->quote($_);
 		if(!defined($target)) { $target = $_; }
 
-		my $sth_word = $dbh->prepare(
+		my $query = 
 			'UPDATE bombs SET result = -1, posted_at = CURRENT_TIMESTAMP ' .
-			"WHERE LOWER(target) LIKE '%" . $_ . "%' AND posted_at IS NULL");
+			"WHERE LOWER(target) LIKE '%" . $target . "%' AND posted_at IS NULL";
+		
+		my $sth_word = $dbh->prepare($query);
 		$sth_word->execute;
 		$sth_word->finish; undef $sth_word;
 	}
